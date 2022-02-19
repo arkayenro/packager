@@ -69,7 +69,10 @@ fi
 # Game versions for uploading
 declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" )
 declare -A game_versions
+toc_paths=()
+toc_versions=()
 toc_version=
+toc_multiple=
 
 # Script return code
 exit_code=0
@@ -956,10 +959,10 @@ elif [ "$repository_type" = "hg" ]; then
 fi
 
 ###
-### Process TOC file
+### Process TOC files
 ###
 
-# Set the package name from a TOC file name
+# generate package name based off the first TOC filename found
 if [[ -z "$package" ]]; then
 	package=$( cd "$topdir" && find *.toc -maxdepth 0 2>/dev/null | head -n1 )
 	if [[ -z "$package" ]]; then
@@ -967,12 +970,52 @@ if [[ -z "$package" ]]; then
 		exit 1
 	fi
 	package=${package%.toc}
-	if [[ $package =~ ^(.*)-(Mainline|Classic|BCC)$ ]]; then
+	if [[ $package =~ ^(.*)[_-](Mainline|TBC|BCC|Classic|Vanilla)$ ]]; then
 		package="${BASH_REMATCH[1]}"
 	fi
 fi
 
 toc_path="$package.toc"
+
+# check for multiple client tocs
+tmp_paths=()
+while IFS=  read -r -d $'\0'; do
+	tmp_paths+=("$REPLY")
+done < <(cd "$topdir" && find *.toc -maxdepth 0 -print0 2>/dev/null)
+
+if [[ ${#tmp_paths[@]} > 1 ]]; then
+	toc_multiple="true"
+	echo "multiple ($toc_count) toc files found"
+fi	
+
+for i in "${tmp_paths[@]}"
+do
+	toc_path=$i
+	echo "Processing: $toc_path"
+	
+	toc_file=$(
+		# remove bom and cr and apply some non-version toc filters
+		[ "$file_type" != "alpha" ] && _tf_alpha="true"
+		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
+	)
+	root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file" )
+	
+	if [[ ${i%.toc} =~ (.*)[_-](Vanilla|Classic)$ ]]; then
+	
+		game_type="classic"
+	elif [[ ${i%.toc} =~ (.*)[_-](TBC|BCC)$ ]]; then
+		game_type="bcc"
+	else
+		game_type="retail"
+	fi
+	
+	toc_paths[$game_type]="$i"
+	game_versions[$game_type]="$root_toc_version"
+	echo "toc version for $game_type = $root_toc_version"
+done
+
+
+
 
 # Handle having the main addon in a sub dir
 if [[ ! -f "$topdir/$toc_path" && -f "$topdir/$package/$toc_path" ]]; then
@@ -983,6 +1026,7 @@ if [[ ! -f "$topdir/$toc_path" ]]; then
 	echo "Could not find an addon TOC file. In another directory? Make sure it matches the 'package-as' in .pkgmeta" >&2
 	exit 1
 fi
+
 
 # Get the interface version for setting the upload version.
 toc_file=$(
@@ -2551,14 +2595,14 @@ if [ -z "$skip_zipfile" ]; then
 
 		_gh_metadata='{ "filename": "'"$archive_name"'", "nolib": false, "metadata": ['
 		for type in "${!game_versions[@]}"; do
-			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$toc_version"' },'
+			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$toc_versions[$type]"' },'
 		done
 		_gh_metadata=${_gh_metadata%,}
 		_gh_metadata+='] }'
 		if [ -f "$nolib_archive" ]; then
 			_gh_metadata+=',{ "filename": "'"$nolib_archive_name"'", "nolib": true, "metadata": ['
 			for type in "${!game_versions[@]}"; do
-				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$toc_version"' },'
+				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$toc_versions[$type]"' },'
 			done
 			_gh_metadata=${_gh_metadata%,}
 			_gh_metadata+='] }'
