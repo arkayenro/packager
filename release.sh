@@ -2296,6 +2296,7 @@ if [ -z "$skip_zipfile" ]; then
 		exit 1
 	fi
 	end_group "archive"
+	echo
 
 	# Create nolib version of the zipfile
 	if [ -n "$enable_nolib_creation" ] && [ -z "$nolib" ] && [ -n "$nolib_exclude" ]; then
@@ -2426,9 +2427,9 @@ if [ -z "$skip_zipfile" ]; then
 		} || {
 			exit_code=1
 		}
-		echo
 
 		rm -f "$resultfile" 2>/dev/null
+		echo
 	fi
 
 	if [ -n "$upload_wowinterface" ]; then
@@ -2514,9 +2515,9 @@ if [ -z "$skip_zipfile" ]; then
 		} || {
 			exit_code=1
 		}
-		echo
 
 		rm -f "$resultfile" 2>/dev/null
+		echo
 	fi
 
 	# Upload to Wago
@@ -2545,7 +2546,6 @@ if [ -z "$skip_zipfile" ]; then
 		EOF
 		)
 
-		echo
 		echo "Uploading $archive_name ($game_version $file_type) to Wago"
 		resultfile="$releasedir/wago_result.json"
 		result=$( echo "$_wago_payload" | curl -sS --retry 3 --retry-delay 10 \
@@ -2578,9 +2578,9 @@ if [ -z "$skip_zipfile" ]; then
 		} || {
 			exit_code=1
 		}
-		echo
 
 		rm -f "$resultfile" 2>/dev/null
+		echo
 	fi
 
 	if [[ -n "$test_local" ]]; then
