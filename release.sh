@@ -27,7 +27,7 @@
 #
 # For more information, please refer to <http://unlicense.org/>
 
-test_local=""
+test_local="yes"
 test_version="1.00.00"
 
 ## USER OPTIONS

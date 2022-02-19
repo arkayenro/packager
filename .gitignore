@@ -2,3 +2,5 @@ tests
 *.toc
 .pkgmeta
 .release
+release-old.sh
+release-1b.sh
