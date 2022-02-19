@@ -29,6 +29,12 @@
 
 test_local=""
 test_version="1.00.00"
+if [[ -n "$test_local" ]]; then
+	CF_API_KEY="yes"
+	GITHUB_OAUTH="yes"
+	WOWI_API_TOKEN="yes"
+	WAGO_API_TOKEN="yes"
+fi
 
 ## USER OPTIONS
 
