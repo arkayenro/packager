@@ -77,7 +77,7 @@ fi
 
 # Game versions for uploading
 declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" )
-declare -A game_versions
+declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
 toc_version=
@@ -993,10 +993,10 @@ do
 		[ "$file_type" != "alpha" ] && _tf_alpha="true"
 		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$i" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 	)
-	tmp_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc" )
+	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc" )
 	
 	if [[ -z "$type" ]]; then
-		case $tmp_version in
+		case $tmp_interface in
 			1*) type="classic" ;;
 			2*) type="bcc" ;;
 			*) type="retail"
@@ -1005,8 +1005,12 @@ do
 	
 	if [[ -z "${toc_paths[$type]}" ]]; then
 		toc_paths[$type]="$i"
-		toc_versions[$type]="$tmp_version"
-		#echo "set $type = $tmp_version"
+		toc_versions[$type]="$tmp_interface"
+		printf -v game_versions[$type] "%d.%d.%d" ${tmp_interface:0:1} ${tmp_interface:1:2} ${tmp_interface:3:2} 2>/dev/null || {
+			echo "Addon TOC interface version \"${tmp_interface}\" is invalid." >&2
+			exit 1
+		}
+		echo "type [$type], toc file [${toc_paths[$type]}], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
 	else
 		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
 		exit 1
@@ -2520,9 +2524,9 @@ if [ -z "$skip_zipfile" ]; then
 		_wago_support_property=""
 		for type in "${!toc_versions[@]}"; do
 			if [[ "$type" == "bcc" ]]; then
-				_wago_support_property+="\"supported_bc_patch\": \"${toc_versions[$type]}\", "
+				_wago_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
 			else
-				_wago_support_property+="\"supported_${type}_patch\": \"${toc_versions[$type]}\", "
+				_wago_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
 			fi
 		done
 
@@ -2541,6 +2545,7 @@ if [ -z "$skip_zipfile" ]; then
 		EOF
 		)
 
+		echo
 		echo "Uploading $archive_name ($game_version $file_type) to Wago"
 		resultfile="$releasedir/wago_result.json"
 		result=$( echo "$_wago_payload" | curl -sS --retry 3 --retry-delay 10 \
