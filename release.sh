@@ -1017,6 +1017,25 @@ do
 	fi
 done
 
+# find the "best" client based toc to use as the primary
+toc_multi=
+if [[ -z "${toc_paths[retail]}" ]]; then
+	if [[ -z "${toc_paths[bcc]}" ]]; then
+		toc_multi="${toc_paths[classic]}"
+	else
+		toc_multi="${toc_paths[bcc]}"
+	fi
+else
+	toc_multi="${toc_paths[retail]}"
+fi
+
+# replace the original toc with the best multi one if its different to the packager
+if [[ ! -z "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
+	toc_path="$toc_multi"
+fi
+
+
+echo "using $toc_path as primary toc file"
 
 # Handle having the main addon in a sub dir
 if [[ ! -f "$topdir/$toc_path" && -f "$topdir/$package/$toc_path" ]]; then
