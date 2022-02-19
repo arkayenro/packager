@@ -69,8 +69,9 @@ fi
 # Game versions for uploading
 declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" )
 declare -A game_versions
-toc_version=
 declare -A toc_paths=
+declare -A toc_versions=
+toc_version=
 
 # Script return code
 exit_code=0
@@ -983,7 +984,7 @@ do
 		[ "$file_type" != "alpha" ] && _tf_alpha="true"
 		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$i" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 	)
-	tmp_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$i" )
+	tmp_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc" )
 	
 	if [[ -z "$type" ]]; then
 		case $tmp_version in
@@ -995,7 +996,8 @@ do
 	
 	if [[ -z "${toc_paths[$type]}" ]]; then
 		toc_paths[$type]="$i"
-		game_versions[$type]="$tmp_version"
+		toc_versions[$type]="$tmp_version"
+		echo "set $type = $tmp_version"
 	else
 		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
 		exit 1
@@ -2506,11 +2508,11 @@ if [ -z "$skip_zipfile" ]; then
 	# Upload to Wago
 	if [ -n "$upload_wago" ] ; then
 		_wago_support_property=""
-		for type in "${!game_versions[@]}"; do
+		for type in "${!toc_versions[@]}"; do
 			if [[ "$type" == "bcc" ]]; then
-				_wago_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
+				_wago_support_property+="\"supported_bc_patch\": \"${toc_versions[$type]}\", "
 			else
-				_wago_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
+				_wago_support_property+="\"supported_${type}_patch\": \"${toc_versions[$type]}\", "
 			fi
 		done
 
@@ -2617,15 +2619,18 @@ if [ -z "$skip_zipfile" ]; then
 		}
 
 		_gh_metadata='{ "filename": "'"$archive_name"'", "nolib": false, "metadata": ['
-		for type in "${!game_versions[@]}"; do
-			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${game_versions[$type]}"' },'
+		for type in "${!toc_versions[@]}"; do
+			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${toc_versions[$type]}"' },'
+#			echo "type = $type"
+#			echo "flavor = ${game_flavors[$type]}"
+#			echo "interface = ${toc_versions[$type]}"
 		done
 		_gh_metadata=${_gh_metadata%,}
 		_gh_metadata+='] }'
 		if [ -f "$nolib_archive" ]; then
 			_gh_metadata+=',{ "filename": "'"$nolib_archive_name"'", "nolib": true, "metadata": ['
-			for type in "${!game_versions[@]}"; do
-				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${game_versions[$type]}"' },'
+			for type in "${!toc_versions[@]}"; do
+				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${toc_versions[$type]}"' },'
 				echo 
 			done
 			_gh_metadata=${_gh_metadata%,}
