@@ -960,21 +960,6 @@ fi
 ### Process TOC files
 ###
 
-# generate package name based off the first TOC filename found
-if [[ -z "$package" ]]; then
-	package=$( cd "$topdir" && find *.toc -maxdepth 0 2>/dev/null | head -n1 )
-	if [[ -z "$package" ]]; then
-		echo "Could not find an addon TOC file. In another directory? Set 'package-as' in .pkgmeta" >&2
-		exit 1
-	fi
-	package=${package%.toc}
-	if [[ $package =~ ^(.*)[_-](Mainline|TBC|BCC|Classic|Vanilla)$ ]]; then
-		package="${BASH_REMATCH[1]}"
-	fi
-fi
-
-toc_path="$package.toc"
-
 tmp_paths=()
 while IFS=  read -r -d $'\0'; do
 	tmp_paths+=("$REPLY")
@@ -1029,11 +1014,24 @@ else
 	toc_multi="${toc_paths[retail]}"
 fi
 
-# replace the original toc with the best multi one if its different to the packager
-if [[ ! -z "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
-	toc_path="$toc_multi"
+# generate package name based off the first TOC filename found
+if [[ -z "$package" ]]; then
+	package=$( cd "$topdir" && find *.toc -maxdepth 0 2>/dev/null | head -n1 )
+	if [[ -z "$package" ]]; then
+		echo "Could not find an addon TOC file. In another directory? Set 'package-as' in .pkgmeta" >&2
+		exit 1
+	fi
+	package=${package%.toc}
+	if [[ $package =~ ^(.*)[_-](Mainline|TBC|BCC|Classic|Vanilla)$ ]]; then
+		package="${BASH_REMATCH[1]}"
+	fi
 fi
 
+toc_path="$package.toc"
+if [[ -n "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
+	# there is a multi toc file, its different to the packageas value.  add another check the ensure it starts the same???
+	toc_path="$toc_multi"
+fi
 
 echo "using $toc_path as primary toc file"
 
@@ -2239,6 +2237,9 @@ fi
 ### Create the final zipfile for the addon.
 ###
 
+#si_project_version="1.00.00" # local testing - remove me
+#project_version="1.00.00" # local testing - remove me
+
 if [ -z "$skip_zipfile" ]; then
 	archive_version="$project_version" # XXX used for wowi version. should probably switch to label, but the game type gets added on by default :\
 	archive_label="$( filename_filter "$label_template" )"
@@ -2617,14 +2618,15 @@ if [ -z "$skip_zipfile" ]; then
 
 		_gh_metadata='{ "filename": "'"$archive_name"'", "nolib": false, "metadata": ['
 		for type in "${!game_versions[@]}"; do
-			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$game_versions[$type]"' },'
+			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${game_versions[$type]}"' },'
 		done
 		_gh_metadata=${_gh_metadata%,}
 		_gh_metadata+='] }'
 		if [ -f "$nolib_archive" ]; then
 			_gh_metadata+=',{ "filename": "'"$nolib_archive_name"'", "nolib": true, "metadata": ['
 			for type in "${!game_versions[@]}"; do
-				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"$game_versions[$type]"' },'
+				_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${game_versions[$type]}"' },'
+				echo 
 			done
 			_gh_metadata=${_gh_metadata%,}
 			_gh_metadata+='] }'
