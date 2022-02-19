@@ -27,6 +27,9 @@
 #
 # For more information, please refer to <http://unlicense.org/>
 
+test_local=""
+test_version="1.00.00"
+
 ## USER OPTIONS
 
 # Secrets for uploading
@@ -69,8 +72,8 @@ fi
 # Game versions for uploading
 declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" )
 declare -A game_versions
-declare -A toc_paths=
-declare -A toc_versions=
+declare -A toc_paths=()
+declare -A toc_versions=()
 toc_version=
 
 # Script return code
@@ -997,15 +1000,15 @@ do
 	if [[ -z "${toc_paths[$type]}" ]]; then
 		toc_paths[$type]="$i"
 		toc_versions[$type]="$tmp_version"
-		echo "set $type = $tmp_version"
+		#echo "set $type = $tmp_version"
 	else
 		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
 		exit 1
 	fi
 done
 
-# find the "best" client based toc to use as the primary
-toc_multi=
+# find the "best" client based toc to use as the primary for the rest of the old code
+toc_multi=""
 if [[ -z "${toc_paths[retail]}" ]]; then
 	if [[ -z "${toc_paths[bcc]}" ]]; then
 		toc_multi="${toc_paths[classic]}"
@@ -1031,7 +1034,8 @@ fi
 
 toc_path="$package.toc"
 if [[ -n "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
-	# there is a multi toc file, its different to the packageas value.  add another check the ensure it starts the same???
+	# there is a "best" multi toc file, its different to the package value
+	# add another check the ensure it starts the same???
 	toc_path="$toc_multi"
 fi
 
@@ -1107,8 +1111,6 @@ if [ -z "$game_version" ]; then
 	game_versions[$game_type]="$game_version"
 fi
 
-#exit
-
 # Get the title of the project for using in the changelog.
 if [ -z "$project" ]; then
 	project=$( awk '/^## Title:/ { print $0; exit }' <<< "$toc_file" | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
@@ -1159,7 +1161,7 @@ fi
 	[ "$game_type" = "retail" ] && retail="retail" || retail="non-retail version-${game_type}"
 	[ "$file_type" = "alpha" ] && alpha="alpha" || alpha="non-alpha"
 	echo "Build type: ${retail} ${alpha} non-debug${nolib:+ nolib}"
-	echo "Game version: ${game_version}"
+	echo "Game version: ${game_version} / ${toc_versions[@]}"
 	echo
 )
 if [[ "$slug" =~ ^[0-9]+$ ]]; then
@@ -2239,8 +2241,10 @@ fi
 ### Create the final zipfile for the addon.
 ###
 
-#si_project_version="1.00.00" # local testing - remove me
-#project_version="1.00.00" # local testing - remove me
+if [[ -n "$test_local" ]]; then
+	si_project_version="$test_version"
+	project_version="$test_version"
+fi
 
 if [ -z "$skip_zipfile" ]; then
 	archive_version="$project_version" # XXX used for wowi version. should probably switch to label, but the game type gets added on by default :\
@@ -2568,6 +2572,10 @@ if [ -z "$skip_zipfile" ]; then
 		rm -f "$resultfile" 2>/dev/null
 	fi
 
+	if [[ -n "$test_local" ]]; then
+		upload_github=true
+	fi
+	
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
 	if [ -n "$upload_github" ]; then
 		upload_github_asset() {
@@ -2621,9 +2629,11 @@ if [ -z "$skip_zipfile" ]; then
 		_gh_metadata='{ "filename": "'"$archive_name"'", "nolib": false, "metadata": ['
 		for type in "${!toc_versions[@]}"; do
 			_gh_metadata+='{ "flavor": "'"${game_flavors[$type]}"'", "interface": '"${toc_versions[$type]}"' },'
-#			echo "type = $type"
-#			echo "flavor = ${game_flavors[$type]}"
-#			echo "interface = ${toc_versions[$type]}"
+			if [[ -n "$test_local" ]]; then
+				echo "type = $type"
+				echo "flavor = ${game_flavors[$type]}"
+				echo "interface = ${toc_versions[$type]}"
+			fi
 		done
 		_gh_metadata=${_gh_metadata%,}
 		_gh_metadata+='] }'
@@ -2715,7 +2725,9 @@ if [ -z "$skip_zipfile" ]; then
 		}
 
 		rm -f "$resultfile" 2>/dev/null
-		[ -z "$CI" ] && rm -f "$versionfile" 2>/dev/null
+		if [[ -z "$test_local" ]]; then
+			[ -z "$CI" ] && rm -f "$versionfile" 2>/dev/null
+		fi
 		echo
 	fi
 fi
