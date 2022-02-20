@@ -987,7 +987,7 @@ done < <(cd "$topdir" && find *.toc -maxdepth 0 -print0 2>/dev/null)
 
 for i in "${tmp_paths[@]}"
 do
-	echo "Processing: $i"
+	echo "Processing: [$i]"
 	
 	type=""
 	if [[ ${i%.toc} =~ (.*)[_-](Mainline)$ ]]; then
@@ -1020,7 +1020,7 @@ do
 			echo "Addon TOC interface version \"${tmp_interface}\" is invalid." >&2
 			exit 1
 		}
-		echo "type [$type], toc file [${toc_paths[$type]}], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
+		echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
 	else
 		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
 		exit 1
@@ -2405,6 +2405,7 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 			done
 			
+			echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
 			cf_game_version_id=""
 			cf_game_version_ids=()
 			if [[ -n "$cf_game_version" ]]; then
