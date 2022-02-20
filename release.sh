@@ -688,6 +688,8 @@ esac
 
 if [[ -n "$test_local" ]]; then
 	si_tag="$tag"
+	si_project_version="$tag"
+	project_version="$tag"
 fi
 tag=$si_tag
 project_version=$si_project_version
@@ -2259,11 +2261,6 @@ fi
 ###
 ### Create the final zipfile for the addon.
 ###
-
-#if [[ -n "$test_local" ]]; then
-#	si_project_version="$test_version"
-#	project_version="$test_version"
-#fi
 
 if [ -z "$skip_zipfile" ]; then
 	archive_version="$project_version" # XXX used for wowi version. should probably switch to label, but the game type gets added on by default :\
