@@ -2435,7 +2435,7 @@ if [ -z "$skip_zipfile" ]; then
 		fi
 	fi
 	
-	exit
+	#exit
 	
 	# Upload to CurseForge.
 	if [ -n "$upload_curseforge" ]; then
