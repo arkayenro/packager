@@ -27,15 +27,6 @@
 #
 # For more information, please refer to <http://unlicense.org/>
 
-test_local=""
-test_version="1.00.00"
-if [[ -n "$test_local" ]]; then
-	CF_API_KEY="yes"
-	GITHUB_OAUTH="yes"
-	WOWI_API_TOKEN="yes"
-	WAGO_API_TOKEN="yes"
-fi
-
 ## USER OPTIONS
 
 # Secrets for uploading
@@ -69,6 +60,25 @@ label_template="{project-version}{classic}{nolib}"
 wowi_markup="bbcode"
 
 ## END USER OPTIONS
+
+
+## TESTING OPTIONS
+
+test_local=""
+if [[ -n "$test_local" ]]; then
+	tag="1.00.00"
+	CF_API_KEY="" # dont uploaded with this set
+	slug="581591"
+	GITHUB_OAUTH="" # dont uploaded with this set
+	project_github_slug="arkayenro/arktest"
+	WOWI_API_TOKEN="" # dont uploaded with this set
+	addonid="26238"
+	WAGO_API_TOKEN="" # dont uploaded with this set
+	wagoid="5bGo1860"
+fi
+
+## END TESTING OPTIONS
+
 
 if [[ ${BASH_VERSINFO[0]} -lt 4 ]] || [[ ${BASH_VERSINFO[0]} -eq 4 && ${BASH_VERSINFO[1]} -lt 3 ]]; then
 	echo "ERROR! bash version 4.3 or above is required. Your version is ${BASH_VERSION}." >&2
@@ -2251,10 +2261,10 @@ fi
 ### Create the final zipfile for the addon.
 ###
 
-if [[ -n "$test_local" ]]; then
-	si_project_version="$test_version"
-	project_version="$test_version"
-fi
+#if [[ -n "$test_local" ]]; then
+#	si_project_version="$test_version"
+#	project_version="$test_version"
+#fi
 
 if [ -z "$skip_zipfile" ]; then
 	archive_version="$project_version" # XXX used for wowi version. should probably switch to label, but the game type gets added on by default :\
@@ -2345,7 +2355,9 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 	if [ -n "$upload_curseforge" ]; then
+		echo "retrieving game version data from curseforge"
 		_cf_version_data=$( curl -s -H "x-api-token: $cf_token" $project_site/api/game/versions )
+		
 		declare -A _cf_game_version_ids=()
 		if [ -z "$_cf_version_data" ]; then
 			echo "Error fetching game version info from $project_site/api/game/versions"
@@ -2358,16 +2370,16 @@ if [ -z "$skip_zipfile" ]; then
 				
 				_cf_game_version="${game_versions[$type]}"
 				_cf_game_version_id=""
-				echo "$type game version = $_cf_game_version"
+				#echo "$type game version = $_cf_game_version"
 				
 				if [ -n "$_cf_game_version" ]; then
-					#_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "[\"${_cf_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
-					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "\"${_cf_game_version//,/\",\"}\"" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
+					_cf_game_version_id=$( printf '%s' "$_cf_version_data" | jq -c --argjson v "[\"${_cf_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
+					#echo "cf game version $_cf_game_version = $_cf_game_version_id"
 					if [ -n "$_cf_game_version_id" ]; then
 						# and now the reverse, since an invalid version will just be dropped
-						_cf_game_version=$( echo "$_cf_version_data" | jq -r --argjson v "$_cf_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
+						_cf_game_version=$( printf '%s' "$_cf_version_data" | jq -r --argjson v "$_cf_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
 					fi
-					echo "cf game version $_cf_game_version = $_cf_game_version_id"
+					#echo "cf game version $_cf_game_version = $_cf_game_version_id"
 				fi
 				
 				if [ -z "$_cf_game_version_id" ]; then
@@ -2376,22 +2388,22 @@ if [ -z "$skip_zipfile" ]; then
 						classic) _cf_game_type_id=67408 ;;
 						bcc) _cf_game_type_id=73246 ;;
 					esac
-					echo "$type game version $_cf_game_version did not match a cf game id, using alternative id $_cf_game_type_id"
+					echo "$type game version $_cf_game_version did not match a cf game version id, using alternative version id $_cf_game_type_id"
 					
-					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
-					_cf_game_version=$( echo "$_cf_version_data" | jq -r --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
+					_cf_game_version_id=$( printf '%s' "$_cf_version_data" | jq -c --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
+					_cf_game_version=$( printf '%s' "$_cf_version_data" | jq -r --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
 				fi
 				
 				if [ -z "$_cf_game_version_id" ]; then
 					echo "Unable to match your $type game version ${game_versions[$type]} with curseforge game version data"
 				else
-					echo "$type - your version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
-					_cf_game_version_ids[$type]="$_cf_game_version_id"
+					echo "your $type version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
+					_cf_game_version_ids[$type]=${_cf_game_version_id//[[\]]/} # strip the brackets
 				fi
 			done
 			
-			echo "cf game version ids = ${_cf_game_version_ids[*]}"
-			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}")
+			#echo "cf game version ids = ${_cf_game_version_ids[*]}"
+			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}") # join them with a comma
 			echo "cf game version id = $_cf_game_version_id"
 			
 			if [ -z "$_cf_game_version_id" ]; then
@@ -2612,9 +2624,9 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 	fi
 
-	if [[ -n "$test_local" ]]; then
-		upload_github=true
-	fi
+#	if [[ -n "$test_local" ]]; then
+#		upload_github=true
+#	fi
 	
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
 	if [ -n "$upload_github" ]; then
