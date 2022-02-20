@@ -2382,29 +2382,32 @@ if [ -z "$skip_zipfile" ]; then
 					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
-				if [ -z "$tmp_game_version_id" ]; then
-					case $type in
-						retail) cf_game_type_id=517 ;;
-						classic) cf_game_type_id=67408 ;;
-						bcc) cf_game_type_id=73246 ;;
-					esac
-					echo "$type game version $tmp_game_version did not match a cf game version id, using alternative version id $cf_game_type_id"
-					
-					tmp_game_version_id=$( printf '%s' "$cf_version_data" | jq -c --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
-					tmp_game_version=$( printf '%s' "$cf_version_data" | jq -r --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
-				fi
+#				if [ -z "$tmp_game_version_id" ]; then
+#					case $type in
+#						retail) cf_game_type_id=517 ;;
+#						classic) cf_game_type_id=67408 ;;
+#						bcc) cf_game_type_id=73246 ;;
+#					esac
+#					echo "$type game version $tmp_game_version did not match a cf game version id, using alternative version id $cf_game_type_id"
+#					
+#					tmp_game_version_id=$( printf '%s' "$cf_version_data" | jq -c --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
+#					tmp_game_version=$( printf '%s' "$cf_version_data" | jq -r --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
+#				fi
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Ignored $type game version ${game_versions[$type]} - Unable to match with curseforge game version data"
+					echo "Ignored $type game version ${game_versions[$type]} as it is not available on curseforge"
 				else
 					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
-					if [[ tmp_game_version > cf_game_version ]]; then
-						echo "$tmp_game_version is higher than $cf_game_version"
-						cf_game_version="$tmp_game_version" # keep the highest version
-					fi
 				fi
 			done
+			
+			for type in classic bcc retail; do
+				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+					cf_game_version="${game_versions[$type]}"
+				fi
+			done
+			echo "cf_game_version = $cf_game_version"
 			
 			echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
 			cf_game_version_id=""
@@ -2419,6 +2422,7 @@ if [ -z "$skip_zipfile" ]; then
 				# join them together
 				cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
 			fi
+			echo "cf_game_version_id = $cf_game_version_id"
 			
 			if [ -z "$cf_game_version_id" ]; then
 				echo "Unable to match any of your game versions with curseforge game versions"
@@ -2428,9 +2432,10 @@ if [ -z "$skip_zipfile" ]; then
 				upload_curseforge=
 			fi
 			
-			echo "cf_game_version_id = $cf_game_version_id"
 		fi
 	fi
+	
+	exit
 	
 	# Upload to CurseForge.
 	if [ -n "$upload_curseforge" ]; then
