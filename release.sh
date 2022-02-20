@@ -686,6 +686,9 @@ svn)	set_info_svn "$topdir" ;;
 hg) 	set_info_hg  "$topdir" ;;
 esac
 
+if [[ -n "$test_local" ]]; then
+	si_tag="$tag"
+fi
 tag=$si_tag
 project_version=$si_project_version
 previous_version=$si_previous_tag
@@ -2353,18 +2356,20 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 	if [ -n "$upload_curseforge" ]; then
-		echo "retrieving game version data from curseforge"
-		cf_version_data=$( curl -s -H "x-api-token: $cf_token" $project_site/api/game/versions )
+		upload_curseforge=""
+		sitename="CurseForge"
+		cf_game_version=""
+		cf_game_version_id=""
+		cf_game_version_ids=()
+		declare -A tmp_game_version_ids=()
+		tmp_game_version=""
+		tmp_game_version_id=""
 		
-		if [ -z "$cf_version_data" ]; then
-			echo "Error fetching game version data from $project_site/api/game/versions"
-			echo
-			echo "Skipping upload to CurseForge."
-			echo
-			upload_curseforge=
-		else
-			declare -A tmp_game_version_ids=()
-			cf_game_version=""
+		echo "fetching game version data from $sitename"
+		url="$project_site/api/game/versions"
+		cf_version_data=$( curl -s -H "x-api-token: $cf_token" "$url" )
+		
+		if [ -n "$cf_version_data" ]; then
 			
 			for type in "${!game_versions[@]}"; do
 				
@@ -2382,60 +2387,53 @@ if [ -z "$skip_zipfile" ]; then
 					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
-#				if [ -z "$tmp_game_version_id" ]; then
-#					case $type in
-#						retail) cf_game_type_id=517 ;;
-#						classic) cf_game_type_id=67408 ;;
-#						bcc) cf_game_type_id=73246 ;;
-#					esac
-#					echo "$type game version $tmp_game_version did not match a cf game version id, using alternative version id $cf_game_type_id"
-#					
-#					tmp_game_version_id=$( printf '%s' "$cf_version_data" | jq -c --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
-#					tmp_game_version=$( printf '%s' "$cf_version_data" | jq -r --argjson v "$cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
-#				fi
-				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Ignored $type game version ${game_versions[$type]} as it is not available on curseforge"
+					echo "Removed $type game version ${game_versions[$type]} as it is not available on $sitename"
+					exit_code=1
 				else
 					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
+					upload_curseforge="yes"
 				fi
 			done
 			
-			for type in classic bcc retail; do
-				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-					cf_game_version="${game_versions[$type]}"
-				fi
-			done
-			echo "cf_game_version = $cf_game_version"
-			
-			echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
-			cf_game_version_id=""
-			cf_game_version_ids=()
-			if [[ -n "$cf_game_version" ]]; then
-				# put the ids in the right order
-				for type in retail bcc classic; do
+			if [ -n "$upload_curseforge" ]; then
+				
+				for type in classic bcc retail; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-						cf_game_version_ids+=("${tmp_game_version_ids[$type]}")
+						cf_game_version="${game_versions[$type]}"
 					fi
 				done
-				# join them together
-				cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
-			fi
-			echo "cf_game_version_id = $cf_game_version_id"
-			
-			if [ -z "$cf_game_version_id" ]; then
-				echo "Unable to match any of your game versions with curseforge game versions"
+				#echo "cf_game_version = $cf_game_version"
+				
+				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
+				if [[ -n "$cf_game_version" ]]; then
+					# put the ids in the right order
+					for type in retail bcc classic; do
+						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+							cf_game_version_ids+=("${tmp_game_version_ids[$type]}")
+						fi
+					done
+					# join them together
+					cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
+				fi
+				#echo "cf_game_version_id = $cf_game_version_id"
+				
+			else
+				echo "None of your toc versions are compatible with $sitename"
 				echo
-				echo "Skipping upload to CurseForge."
+				echo "Skipping upload to $sitename"
 				echo
-				upload_curseforge=
+				exit_code=1
 			fi
-			
+		else
+			echo "Error fetching $sitename game version data from $url"
+			echo
+			echo "Skipping upload to $sitename"
+			echo
+			exitcode=1
 		fi
 	fi
-	
-	#exit
 	
 	# Upload to CurseForge.
 	if [ -n "$upload_curseforge" ]; then
@@ -2494,35 +2492,80 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 	fi
 
+	#echo "upload_wowinterface=[$skip_upload] [$tag] [$addonid] [$wowi_token]"
 	if [ -n "$upload_wowinterface" ]; then
-		_wowi_game_version=
-		_wowi_versions=$( curl -s -H "x-api-token: $wowi_token" https://api.wowinterface.com/addons/compatible.json )
-		if [ -n "$_wowi_versions" ]; then
-			# Multiple versions, match on game version
-			if [[ "$game_version" == *","* ]]; then
-				_wowi_game_version=$( echo "$_wowi_versions" | jq -r --argjson v "[\"${game_version//,/\",\"}\"]" 'map(select(.id as $x | $v | index($x)) | .id) | join(",")' 2>/dev/null )
+		upload_wowinterface=""
+		sitename="WowInterface"
+		wowi_game_version=
+		wowi_game_version_id=""
+		wowi_game_version_ids=()
+		declare -A tmp_game_version_ids=()
+		tmp_game_version=""
+		tmp_game_version_id=""
+		
+		echo "fetching game version data from $sitename"
+		url="https://api.wowinterface.com/addons/compatible.json"
+		wowi_version_data=$( curl -s -H "x-api-token: $wowi_token" "$url" )
+		
+		if [ -n "$wowi_version_data" ]; then
+			
+			for type in "${!game_versions[@]}"; do
+				
+				tmp_game_version="${game_versions[$type]}"
+				tmp_game_version_id=""
+				#echo "$type game version = $tmp_game_version"
+				
+				if [ -n "$tmp_game_version" ]; then
+					tmp_game_version_id=$( echo "$wowi_version_data" | jq -r --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.id as $x | $v | index($x)) | .id) | join(",")' 2>/dev/null )
+					#echo "wowi game version $tmp_game_version = $tmp_game_version_id"
+				fi
+				
+				#tmp_game_version_id=$( echo "$wowi_version_data" | jq -r '.[] | select(.default == true) | .id' 2>/dev/null )
+				
+				if [ -z "$tmp_game_version_id" ]; then
+					echo "Removed $type game version ${game_versions[$type]} as it is not available on $sitename"
+					exit_code=1
+				else
+					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
+					upload_wowinterface="yes"
+				fi
+			done
+			
+			if [ -n "$upload_wowinterface" ]; then
+				
+				for type in classic bcc retail; do
+					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+						wowi_game_version="${game_versions[$type]}"
+					fi
+				done
+				#echo "wowi_game_version = $wowi_game_version"
+				
+				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
+				if [[ -n "$wowi_game_version" ]]; then
+					# put the ids in the right order
+					for type in retail bcc classic; do
+						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+							wowi_game_version_ids+=("${tmp_game_version_ids[$type]}")
+						fi
+					done
+					# join them together
+					wowi_game_version_id=$(IFS=, ; echo "${wowi_game_version_ids[*]}") # join them with a comma
+				fi
+				#echo "wowi_game_version_id = $wowi_game_version_id"
+				
+			else
+				echo "None of your toc versions are compatible with $sitename"
+				echo
+				echo "Skipping upload to $sitename."
+				echo
+				exit_code=1
 			fi
-			# TOC matching
-			if [ -z "$_wowi_game_version" ]; then
-				_wowi_game_version=$( echo "$_wowi_versions" | jq -r --arg toc "$toc_version" '.[] | select(.interface == $toc and .default == true) | .id' 2>/dev/null )
-			fi
-			if [ -z "$_wowi_game_version" ]; then
-				_wowi_game_version=$( echo "$_wowi_versions" | jq -r --arg toc "$toc_version" 'map(select(.interface == $toc))[0] | .id // empty' 2>/dev/null )
-			fi
-			# Handle delayed support (probably don't really need this anymore)
-			if [ -z "$_wowi_game_version" ] && [ "$game_type" != "retail" ]; then
-				_wowi_game_version=$( echo "$_wowi_versions" | jq -r --arg toc $((toc_version - 1)) '.[] | select(.interface == $toc) | .id' 2>/dev/null )
-			fi
-			if [ -z "$_wowi_game_version" ]; then
-				_wowi_game_version=$( echo "$_wowi_versions" | jq -r '.[] | select(.default == true) | .id' 2>/dev/null )
-			fi
-		fi
-		if [ -z "$_wowi_game_version" ]; then
-			echo "Error fetching game version info from https://api.wowinterface.com/addons/compatible.json"
+		else
+			echo "Error fetching $sitename game version info from $url"
 			echo
-			echo "Skipping upload to WoWInterface."
+			echo "Skipping upload to $sitename"
 			echo
-			upload_wowinterface=
 			exit_code=1
 		fi
 	fi
@@ -2539,14 +2582,14 @@ if [ -z "$skip_zipfile" ]; then
 			_wowi_args+=("-F archive=No")
 		fi
 
-		echo "Uploading $archive_name ($_wowi_game_version) to https://www.wowinterface.com/downloads/info$addonid"
+		echo "Uploading $archive_name ($wowi_game_version) to https://www.wowinterface.com/downloads/info$addonid"
 		resultfile="$releasedir/wi_result.json"
 		result=$( curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "x-api-token: $wowi_token" \
 				-F "id=$addonid" \
 				-F "version=$archive_version" \
-				-F "compatible=$_wowi_game_version" \
+				-F "compatible=$wowi_game_version_id" \
 				"${_wowi_args[@]}" \
 				-F "updatefile=@$archive" \
 				"https://api.wowinterface.com/addons/update"
@@ -2591,6 +2634,8 @@ if [ -z "$skip_zipfile" ]; then
 			else
 				_wago_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
 			fi
+			echo "your $type version = ${game_versions[$type]}, wago currently has no version limitations"
+
 		done
 
 		_wago_stability="$file_type"
