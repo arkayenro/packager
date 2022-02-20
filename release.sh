@@ -2400,6 +2400,7 @@ if [ -z "$skip_zipfile" ]; then
 					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 					if [[ tmp_game_version > cf_game_version ]]; then
+						echo "$tmp_game_version is higher than $cf_game_version"
 						cf_game_version="$tmp_game_version" # keep the highest version
 					fi
 				fi
@@ -2416,7 +2417,7 @@ if [ -z "$skip_zipfile" ]; then
 					fi
 				done
 				# join them together
-				cf_game_version_id=$(IFS=, ; echo "${tmp_game_version_ids[*]}") # join them with a comma
+				cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
 			fi
 			
 			if [ -z "$cf_game_version_id" ]; then
