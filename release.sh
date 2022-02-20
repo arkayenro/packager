@@ -2384,7 +2384,7 @@ if [ -z "$skip_zipfile" ]; then
 						echo "Unable to match your $type game version ${game_versions[$type]} with curseforge game version data"
 					else
 						echo "$type - your version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
-						_cf_game_version_ids[$type] = _cf_game_version_id
+						_cf_game_version_ids[$type] = "$_cf_game_version_id"
 					fi
 				fi
 			done
