@@ -2408,15 +2408,14 @@ if [ -z "$skip_zipfile" ]; then
 			cf_game_version_id=""
 			cf_game_version_ids=()
 			if [[ -n "$cf_game_version" ]]; then
-				# put them in the right order
+				# put the ids in the right order
 				for type in retail bcc classic; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						cf_game_version_ids+=("${tmp_game_version_ids[$type]}")
 					fi
 				done
 				# join them together
-				cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
-				#echo "cf_game_version_id = $cf_game_version_id"
+				cf_game_version_id=$(IFS=, ; echo "${tmp_game_version_ids[*]}") # join them with a comma
 			fi
 			
 			if [ -z "$cf_game_version_id" ]; then
@@ -2426,6 +2425,8 @@ if [ -z "$skip_zipfile" ]; then
 				echo
 				upload_curseforge=
 			fi
+			
+			echo "cf_game_version_id = $cf_game_version_id"
 		fi
 	fi
 	
