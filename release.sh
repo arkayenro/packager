@@ -2389,9 +2389,9 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 			done
 			
-			echo "cf game version ids = ${_cf_game_version_ids[*]}"
-			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}")
-			echo "cf game version ids = $_cf_game_version_id"
+			echo "cf game version ids = ${_cf_game_version_ids[@]}"
+			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[@]}")
+			echo "cf game version id = $_cf_game_version_id"
 			
 			if [ -z "$_cf_game_version_id" ]; then
 				echo "Unable to match any of your game versions with curseforge game versions"
