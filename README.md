@@ -26,7 +26,7 @@ While you do not require an AddOnName.toc if you have an AddOnName-Mainline.toc
 file, some hosting services (eg CurseForge) cannot handle that situation and you
 may be better off leaving it as the default format.
 
-Use of the -g option shoul dnot be required, and is untested and i have no idea
+Use of the -g option should not be required, and is untested so i have no idea
 what it will do, so dont use it.
 
 All you need to do is setup toc files for the clients that your addon supports (with
