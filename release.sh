@@ -2355,6 +2355,8 @@ if [ -z "$skip_zipfile" ]; then
 	if [ -n "$upload_curseforge" ]; then
 		upload_curseforge=""
 		sitename="CurseForge"
+		echo "Processing $sitename"
+		
 		cf_game_version=""
 		cf_game_version_id=""
 		cf_game_version_ids=()
@@ -2493,6 +2495,8 @@ if [ -z "$skip_zipfile" ]; then
 	if [ -n "$upload_wowinterface" ]; then
 		upload_wowinterface=""
 		sitename="WowInterface"
+		echo "Processing $sitename"
+		
 		wowi_game_version=
 		wowi_game_version_id=""
 		wowi_game_version_ids=()
@@ -2624,6 +2628,9 @@ if [ -z "$skip_zipfile" ]; then
 
 	# Upload to Wago
 	if [ -n "$upload_wago" ] ; then
+		sitename="Wago Addons"
+		echo "Processing $sitename"
+		
 		_wago_support_property=""
 		for type in "${!toc_versions[@]}"; do
 			if [[ "$type" == "bcc" ]]; then
@@ -2689,6 +2696,9 @@ if [ -z "$skip_zipfile" ]; then
 
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
 	if [ -n "$upload_github" ]; then
+		sitename="GitHub"
+		echo "Processing $sitename"
+		
 		upload_github_asset() {
 			_ghf_release_id=$1
 			_ghf_file_name=$2
@@ -2841,6 +2851,7 @@ if [ -z "$skip_zipfile" ]; then
 		fi
 		echo
 	fi
+	
 fi
 
 # All done.
