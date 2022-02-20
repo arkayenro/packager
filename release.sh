@@ -2361,7 +2361,8 @@ if [ -z "$skip_zipfile" ]; then
 				echo "$type game version = $_cf_game_version"
 				
 				if [ -n "$_cf_game_version" ]; then
-					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "[\"${_cf_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
+					#_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "[\"${_cf_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
+					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "\"${_cf_game_version//,/\",\"}\"" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
 					if [ -n "$_cf_game_version_id" ]; then
 						# and now the reverse, since an invalid version will just be dropped
 						_cf_game_version=$( echo "$_cf_version_data" | jq -r --argjson v "$_cf_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
@@ -2385,7 +2386,7 @@ if [ -z "$skip_zipfile" ]; then
 					echo "Unable to match your $type game version ${game_versions[$type]} with curseforge game version data"
 				else
 					echo "$type - your version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
-					_cf_game_version_ids[$type] = "$_cf_game_version_id"
+					_cf_game_version_ids[$type]="$_cf_game_version_id"
 				fi
 			done
 			
