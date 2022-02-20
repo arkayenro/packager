@@ -2346,7 +2346,13 @@ if [ -z "$skip_zipfile" ]; then
 
 	if [ -n "$upload_curseforge" ]; then
 		_cf_version_data=$( curl -s -H "x-api-token: $cf_token" $project_site/api/game/versions )
-		if [ -n "$_cf_version_data" ]; then
+		if [ -z "$_cf_version_data" ]; then
+			echo "Error fetching game version info from $project_site/api/game/versions"
+			echo
+			echo "Skipping upload to CurseForge."
+			echo
+			upload_curseforge=
+		else
 			declare -A _cf_game_version_ids=()
 			for type in "${!game_versions[@]}"; do
 				
@@ -2380,20 +2386,20 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 			done
 			
-			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_versions[*]}")
+			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}")
 			echo "cf game version ids = $_cf_game_version_id"
+			
+			if [ -z "$_cf_game_version_id" ]; then
+				echo "Unable to match your game versions with curseforge game versions"
+				echo
+				echo "Skipping upload to CurseForge."
+				echo
+				upload_curseforge=
+			fi
+			
+			upload_curseforge="" #temp stop uloads while testing
 		fi
 		
-		upload_curseforge="" #temp stop uloads while testing
-		
-		if [ -z "$_cf_game_version_id" ]; then
-			echo "Error fetching game version info from $project_site/api/game/versions"
-			echo
-			echo "Skipping upload to CurseForge."
-			echo
-			upload_curseforge=
-			exit_code=1
-		fi
 	fi
 
 	# Upload to CurseForge.
