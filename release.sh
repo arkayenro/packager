@@ -2379,18 +2379,18 @@ if [ -z "$skip_zipfile" ]; then
 					
 					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
 					_cf_game_version=$( echo "$_cf_version_data" | jq -r --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
-					
-					if [ -z "$_cf_game_version_id" ]; then
-						echo "Unable to match your $type game version ${game_versions[$type]} with curseforge game version data"
-					else
-						echo "$type - your version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
-						_cf_game_version_ids[$type] = "$_cf_game_version_id"
-					fi
+				fi
+				
+				if [ -z "$_cf_game_version_id" ]; then
+					echo "Unable to match your $type game version ${game_versions[$type]} with curseforge game version data"
+				else
+					echo "$type - your version = ${game_versions[$type]}, cf version = $_cf_game_version, cf version id = $_cf_game_version_id"
+					_cf_game_version_ids[$type] = "$_cf_game_version_id"
 				fi
 			done
 			
-			echo "cf game version ids = ${_cf_game_version_ids[@]}"
-			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[@]}")
+			echo "cf game version ids = ${_cf_game_version_ids[*]}"
+			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}")
 			echo "cf game version id = $_cf_game_version_id"
 			
 			if [ -z "$_cf_game_version_id" ]; then
