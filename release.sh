@@ -1003,12 +1003,12 @@ do
 		type="bcc"
 	fi
 	
-	tmp_toc=$(
+	tmp_toc_file_data=$(
 		# remove bom and cr and apply some non-version toc filters
 		[ "$file_type" != "alpha" ] && _tf_alpha="true"
 		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$i" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 	)
-	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc" )
+	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
 	
 	if [[ -z "$type" ]]; then
 		case $tmp_interface in
@@ -1022,21 +1022,24 @@ do
 		toc_paths[$type]="$i"
 		toc_versions[$type]="$tmp_interface"
 		printf -v game_versions[$type] "%d.%d.%d" ${tmp_interface:0:1} ${tmp_interface:1:2} ${tmp_interface:3:2} 2>/dev/null || {
-			echo "Addon TOC interface version \"${tmp_interface}\" is invalid." >&2
-			exit 1
+			echo "TOC interface version \"${tmp_interface}\" is invalid." >&2
+			exit_code=1
 		}
 		echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
 	else
 		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
-		exit 1
+		exit_code=1
 	fi
 done
 
-# find the "best" client based toc to use as the primary for the rest of the old code
+# find the newest client based toc to use as the primary for the rest of the old code
 toc_multi=""
 for type in classic bcc retail; do
 	if [[ -n "${toc_paths[$type]}" ]]; then
 		toc_multi="${toc_paths[$type]}"
+		game_type="$type"
+		root_toc_version="${toc_versions[$type]}"
+		toc_version="$root_toc_version"
 	fi
 done
 
@@ -1054,13 +1057,15 @@ if [[ -z "$package" ]]; then
 fi
 
 toc_path="$package.toc"
+
 if [[ -n "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
 	# there is a "best" multi toc file, its different to the package value
-	# add another check the ensure it starts the same???
+	# add another check the ensure it starts the same (minus the toc extension)???
 	toc_path="$toc_multi"
 fi
 
 echo "using $toc_path as primary toc file"
+
 
 # Handle having the main addon in a sub dir
 if [[ ! -f "$topdir/$toc_path" && -f "$topdir/$package/$toc_path" ]]; then
@@ -1072,81 +1077,84 @@ if [[ ! -f "$topdir/$toc_path" ]]; then
 	exit 1
 fi
 
+if [[ -z "$toc_multi" ]]; then
 
-# Get the interface version for setting the upload version.
-toc_file=$(
-	# remove bom and cr and apply some non-version toc filters
-	[ "$file_type" != "alpha" ] && _tf_alpha="true"
-	sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
-)
-root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file" )
-toc_version="$root_toc_version"
-if [[ -n "$toc_version" && -z "$game_type" ]]; then
-	# toc -> game type
-	case $toc_version in
-		11[34]*) game_type="classic" ;;
-		205*) game_type="bcc" ;;
-		*) game_type="retail"
-	esac
-else
-	# game type -> toc
-	game_type_toc_version=$( awk 'tolower($0) ~ /^## interface-'${game_type:-retail}':/ { print $NF; exit }' <<< "$toc_file" )
-	if [[ -z "$game_type" ]]; then
-		# default to retail
-		game_type="retail"
-	elif [[ -n "$game_type_toc_version" ]]; then
-		# use the game version value if set
-		toc_version="$game_type_toc_version"
-	fi
-	# Check for other interface lines
-	if [[ -z "$toc_version" ]] || \
-		 [[ "$game_type" == "classic" && ("$toc_version" != "113"* && "$toc_version" != "114"*) ]] || \
-		 [[ "$game_type" == "bcc" && "$toc_version" != "205"* ]] || \
-		 [[ "$game_type" == "retail" && ("$toc_version" == "113"* || "$toc_version" == "114"* || "$toc_version" == "205"*) ]]
-	then
-		toc_version="$game_type_toc_version"
+	# Get the interface version for setting the upload version.
+	toc_file_data=$(
+		# remove bom and cr and apply some non-version toc filters
+		[ "$file_type" != "alpha" ] && _tf_alpha="true"
+		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
+	)
+	root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file_data" )
+	toc_version="$root_toc_version"
+	if [[ -n "$toc_version" && -z "$game_type" ]]; then
+		# toc -> game type
+		case $toc_version in
+			11[34]*) game_type="classic" ;;
+			205*) game_type="bcc" ;;
+			*) game_type="retail"
+		esac
+	else
+		# game type -> toc
+		game_type_toc_version=$( awk 'tolower($0) ~ /^## interface-'${game_type:-retail}':/ { print $NF; exit }' <<< "$toc_file_data" )
+		if [[ -z "$game_type" ]]; then
+			# default to retail
+			game_type="retail"
+		elif [[ -n "$game_type_toc_version" ]]; then
+			# use the game version value if set
+			toc_version="$game_type_toc_version"
+		fi
+		# Check for other interface lines
+		if [[ -z "$toc_version" ]] || \
+			 [[ "$game_type" == "classic" && ("$toc_version" != "113"* && "$toc_version" != "114"*) ]] || \
+			 [[ "$game_type" == "bcc" && "$toc_version" != "205"* ]] || \
+			 [[ "$game_type" == "retail" && ("$toc_version" == "113"* || "$toc_version" == "114"* || "$toc_version" == "205"*) ]]
+		then
+			toc_version="$game_type_toc_version"
+			if [[ -z "$toc_version" ]]; then
+				# Check @non-@ blocks
+				case $game_type in
+					classic) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(11[34])/ { print $NF; exit }' ) ;;
+					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(205)/ { print $NF; exit }' ) ;;
+				esac
+				# This becomes the actual interface version after string replacements
+				root_toc_version="$toc_version"
+			fi
+		fi
 		if [[ -z "$toc_version" ]]; then
-			# Check @non-@ blocks
-			case $game_type in
-				classic) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(11[34])/ { print $NF; exit }' ) ;;
-				bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(205)/ { print $NF; exit }' ) ;;
-			esac
-			# This becomes the actual interface version after string replacements
-			root_toc_version="$toc_version"
+			echo "Addon TOC interface version is not compatible with the game version \"${game_type}\" or was not found." >&2
+			exit 1
+		fi
+		if [[ "${toc_version,,}" == "incompatible" ]]; then
+			echo "Addon TOC interface version is set as incompatible for game version \"${game_type}\"." >&2
+			exit 1
 		fi
 	fi
-	if [[ -z "$toc_version" ]]; then
-		echo "Addon TOC interface version is not compatible with the game version \"${game_type}\" or was not found." >&2
-		exit 1
+	if [ -z "$game_version" ]; then
+		printf -v game_version "%d.%d.%d" ${toc_version:0:1} ${toc_version:1:2} ${toc_version:3:2} 2>/dev/null || {
+			echo "Addon TOC interface version \"${toc_version}\" is invalid." >&2
+			exit 1
+		}
+		game_versions[$game_type]="$game_version"
 	fi
-	if [[ "${toc_version,,}" == "incompatible" ]]; then
-		echo "Addon TOC interface version is set as incompatible for game version \"${game_type}\"." >&2
-		exit 1
-	fi
-fi
-if [ -z "$game_version" ]; then
-	printf -v game_version "%d.%d.%d" ${toc_version:0:1} ${toc_version:1:2} ${toc_version:3:2} 2>/dev/null || {
-		echo "Addon TOC interface version \"${toc_version}\" is invalid." >&2
-		exit 1
-	}
-	game_versions[$game_type]="$game_version"
+
 fi
 
 # Get the title of the project for using in the changelog.
 if [ -z "$project" ]; then
-	project=$( awk '/^## Title:/ { print $0; exit }' <<< "$toc_file" | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
+	project=$( awk '/^## Title:/ { print $0; exit }' <<< "$toc_file_data" | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
 fi
 # Grab CurseForge ID and WoWI ID from the TOC file if not set by the script.
 if [ -z "$slug" ]; then
-	slug=$( awk '/^## X-Curse-Project-ID:/ { print $NF; exit }' <<< "$toc_file" )
+	slug=$( awk '/^## X-Curse-Project-ID:/ { print $NF; exit }' <<< "$toc_file_data" )
 fi
 if [ -z "$addonid" ]; then
-	addonid=$( awk '/^## X-WoWI-ID:/ { print $NF; exit }' <<< "$toc_file" )
+	addonid=$( awk '/^## X-WoWI-ID:/ { print $NF; exit }' <<< "$toc_file_data" )
 fi
 if [ -z "$wagoid" ]; then
-	wagoid=$( awk '/^## X-Wago-ID:/ { print $NF; exit }' <<< "$toc_file" )
+	wagoid=$( awk '/^## X-Wago-ID:/ { print $NF; exit }' <<< "$toc_file_data" )
 fi
-unset toc_file
+unset toc_file_data
 
 # unset project ids if they are set to 0
 [ "$slug" = "0" ] && slug=
