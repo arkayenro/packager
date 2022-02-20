@@ -2346,6 +2346,7 @@ if [ -z "$skip_zipfile" ]; then
 
 	if [ -n "$upload_curseforge" ]; then
 		_cf_version_data=$( curl -s -H "x-api-token: $cf_token" $project_site/api/game/versions )
+		declare -A _cf_game_version_ids=()
 		if [ -z "$_cf_version_data" ]; then
 			echo "Error fetching game version info from $project_site/api/game/versions"
 			echo
@@ -2353,7 +2354,6 @@ if [ -z "$skip_zipfile" ]; then
 			echo
 			upload_curseforge=
 		else
-			declare -A _cf_game_version_ids=()
 			for type in "${!game_versions[@]}"; do
 				
 				_cf_game_version="${game_versions[$type]}"
@@ -2370,13 +2370,12 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 				
 				if [ -z "$_cf_game_version_id" ]; then
-					echo "game version did not match any cf game ids, using defaults"
 					case $type in
 						retail) _cf_game_type_id=517 ;;
 						classic) _cf_game_type_id=67408 ;;
 						bcc) _cf_game_type_id=73246 ;;
 					esac
-					echo "cf game type id = $_cf_game_type_id"
+					echo "$type game version $_cf_game_version did not match a cf game id, using alternative id $_cf_game_type_id"
 					
 					_cf_game_version_id=$( echo "$_cf_version_data" | jq -c --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | [.id]' 2>/dev/null )
 					_cf_game_version=$( echo "$_cf_version_data" | jq -r --argjson v "$_cf_game_type_id" 'map(select(.gameVersionTypeID == $v)) | max_by(.id) | .name' 2>/dev/null )
@@ -2390,19 +2389,18 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 			done
 			
+			echo "cf game version ids = ${_cf_game_version_ids[*]}"
 			_cf_game_version_id=$(IFS=, ; echo "${_cf_game_version_ids[*]}")
 			echo "cf game version ids = $_cf_game_version_id"
 			
 			if [ -z "$_cf_game_version_id" ]; then
-				echo "Unable to match your game versions with curseforge game versions"
+				echo "Unable to match any of your game versions with curseforge game versions"
 				echo
 				echo "Skipping upload to CurseForge."
 				echo
 				upload_curseforge=
 			fi
-			
 		fi
-		
 	fi
 
 	# Upload to CurseForge.
