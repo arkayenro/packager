@@ -2360,6 +2360,7 @@ if [ -z "$skip_zipfile" ]; then
 		exit_code=1
 	fi
 
+	echo "cf = -z [$skip_upload] && -z [$skip_cf_upload] && -n [$slug] && -n [$cf_token] && -n [$project_site]"
 	if [ -n "$upload_curseforge" ]; then
 		upload_curseforge=""
 		sitename="CurseForge"
@@ -2501,6 +2502,7 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 	fi
 
+	echo "wowi = -z [$skip_upload] && -n [$tag] && -n [$addonid] && -n [$wowi_token]"
 	#echo "upload_wowinterface=[$skip_upload] [$tag] [$addonid] [$wowi_token]"
 	if [ -n "$upload_wowinterface" ]; then
 		upload_wowinterface=""
@@ -2636,6 +2638,7 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 	fi
 
+	echo "wago = -z [$skip_upload] && -n [$wagoid] && -n [$wago_token]"
 	# Upload to Wago
 	if [ -n "$upload_wago" ] ; then
 		sitename="Wago Addons"
@@ -2704,6 +2707,7 @@ if [ -z "$skip_zipfile" ]; then
 		echo
 	fi
 
+	echo "gh = -z [$skip_upload] && -n [$tag] && -n [$project_github_slug] && -n [$github_token]"
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
 	if [ -n "$upload_github" ]; then
 		sitename="GitHub"
