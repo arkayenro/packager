@@ -2409,13 +2409,12 @@ if [ -z "$skip_zipfile" ]; then
 				done
 				
 				if [[ -n "$_site_game_version" ]]; then
-					# put the ids in the right order.  not really needed but it doesnt hurt anytihng.
-					for type in retail bcc classic; do
+					# checking if curse wants the "primary" at the end of the list?
+					for type in classic bcc retail; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
 					done
-					# join them together
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
 			else
