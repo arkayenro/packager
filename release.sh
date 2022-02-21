@@ -1038,8 +1038,6 @@ for type in classic bcc retail; do
 	if [[ -n "${toc_paths[$type]}" ]]; then
 		toc_multi="${toc_paths[$type]}"
 		game_type="$type"
-		root_toc_version="${toc_versions[$type]}"
-		toc_version="$root_toc_version"
 	fi
 done
 
@@ -1059,7 +1057,7 @@ fi
 toc_path="$package.toc"
 
 if [[ -n "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
-	# there is a "best" multi toc file, its different to the package value
+	# there is a multi toc file, its name is different to the package value
 	# add another check the ensure it starts the same (minus the toc extension)???
 	toc_path="$toc_multi"
 fi
@@ -1077,16 +1075,18 @@ if [[ ! -f "$topdir/$toc_path" ]]; then
 	exit 1
 fi
 
-if [[ -z "$toc_multi" ]]; then
 
-	# Get the interface version for setting the upload version.
-	toc_file_data=$(
-		# remove bom and cr and apply some non-version toc filters
-		[ "$file_type" != "alpha" ] && _tf_alpha="true"
-		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
-	)
-	root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file_data" )
-	toc_version="$root_toc_version"
+# Get the interface version for setting the upload version.
+toc_file_data=$(
+	# remove bom and cr and apply some non-version toc filters
+	[ "$file_type" != "alpha" ] && _tf_alpha="true"
+	sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
+)
+root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file_data" )
+toc_version="$root_toc_version"
+	
+	
+if [[ -z "$toc_multi" ]]; then
 	if [[ -n "$toc_version" && -z "$game_type" ]]; then
 		# toc -> game type
 		case $toc_version in
