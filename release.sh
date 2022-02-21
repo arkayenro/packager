@@ -30,30 +30,30 @@
 ## USER OPTIONS
 
 # Secrets for uploading
-cf_token=
-github_token=
-wowi_token=
-wago_token=
+cf_token=""
+github_token=""
+wowi_token=""
+wago_token=""
 
 # Variables set via command-line options
-slug=
-addonid=
-wagoid=
-topdir=
-releasedir=
-overwrite=
-nolib=
+slug=""
+addonid=""
+wagoid=""
+topdir=""
+releasedir=""
+overwrite=""
+nolib=""
 line_ending="dos"
-skip_copying=
-skip_externals=
-skip_localization=
-skip_zipfile=
-skip_upload=
-skip_cf_upload=
-pkgmeta_file=
-game_version=
-game_type=
-file_type=
+skip_copying=""
+skip_externals=""
+skip_localization=""
+skip_zipfile=""
+skip_upload=""
+skip_cf_upload=""
+pkgmeta_file=""
+game_version=""
+game_type=""
+file_type=""
 file_template="{package-name}-{project-version}{nolib}{classic}"
 label_template="{project-version}{classic}{nolib}"
 
@@ -90,7 +90,7 @@ declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="b
 declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
-toc_version=
+toc_version=""
 
 # Script return code
 exit_code=0
@@ -418,7 +418,7 @@ case $basedir in
 esac
 
 # Set $repository_type to "git" or "svn" or "hg".
-repository_type=
+repository_type=""
 if [ -d "$topdir/.git" ]; then
 	repository_type=git
 elif [ -d "$topdir/.svn" ]; then
@@ -507,8 +507,8 @@ set_info_git() {
 	si_project_revision=$( git -C "$si_repo_dir" rev-list --count "$si_project_hash" 2>/dev/null )
 
 	# Get the tag for the HEAD.
-	si_previous_tag=
-	si_previous_revision=
+	si_previous_tag=""
+	si_previous_revision=""
 	_si_tag=$( git -C "$si_repo_dir" describe --tags --always --abbrev=7 2>/dev/null )
 	si_tag=$( git -C "$si_repo_dir" describe --tags --always --abbrev=0 2>/dev/null )
 	# Set $si_project_version to the version number of HEAD. May be empty if there are no commits.
@@ -517,13 +517,13 @@ set_info_git() {
 	if [ "$si_tag" = "$si_project_hash" ]; then
 		# --abbrev=0 expands out the full sha if there was no previous tag
 		si_project_version=$_si_tag
-		si_previous_tag=
-		si_tag=
+		si_previous_tag=""
+		si_tag=""
 	elif [ "$_si_tag" != "$si_tag" ]; then
 		# not on a tag
 		si_project_version=$( git -C "$si_repo_dir" describe --tags --abbrev=7 --exclude="*[Aa][Ll][Pp][Hh][Aa]*" 2>/dev/null )
 		si_previous_tag=$( git -C "$si_repo_dir" describe --tags --abbrev=0 --exclude="*[Aa][Ll][Pp][Hh][Aa]*" 2>/dev/null )
-		si_tag=
+		si_tag=""
 	else # we're on a tag, just jump back one commit
 		if [[ ${si_tag,,} != *"beta"* && ${si_tag,,} != *"alpha"* ]]; then
 			# full release, ignore beta tags
@@ -592,8 +592,8 @@ set_info_svn() {
 		si_project_date_iso=$( TZ='' printf "%(%Y-%m-%dT%H:%M:%SZ)T" "$si_project_timestamp" )
 		si_project_date_integer=$( TZ='' printf "%(%Y%m%d%H%M%S)T" "$si_project_timestamp" )
 		# SVN repositories have no project hash.
-		si_project_hash=
-		si_project_abbreviated_hash=
+		si_project_hash=""
+		si_project_abbreviated_hash=""
 
 		rm -f "$_si_svninfo" 2>/dev/null
 	fi
@@ -617,7 +617,7 @@ set_info_hg() {
 	si_project_revision=$( hg --cwd "$si_repo_dir" log -r . --template '{rev}' 2>/dev/null )
 
 	# Get tag info
-	si_tag=
+	si_tag=""
 	# I'm just muddling through revsets, so there is probably a better way to do this
 	# Ignore tag commits, so v1.0-1 will package as v1.0
 	if [ "$( hg --cwd "$si_repo_dir" log -r '.-filelog(.hgtags)' --template '{rev}' 2>/dev/null )" == "" ]; then
@@ -661,8 +661,8 @@ set_info_file() {
 			si_file_date_iso=$( TZ='' printf "%(%Y-%m-%dT%H:%M:%SZ)T" "$si_file_timestamp" )
 			si_file_date_integer=$( TZ='' printf "%(%Y%m%d%H%M%S)T" "$si_file_timestamp" )
 			# SVN repositories have no project hash.
-			si_file_hash=
-			si_file_abbreviated_hash=
+			si_file_hash=""
+			si_file_abbreviated_hash=""
 
 			rm -f "$_sif_svninfo" 2>/dev/null
 		fi
@@ -698,13 +698,13 @@ project_hash=$si_project_hash
 project_revision=$si_project_revision
 previous_revision=$si_previous_revision
 project_timestamp=$si_project_timestamp
-project_github_url=
-project_github_slug=
+project_github_url=""
+project_github_slug=""
 if [[ "$si_repo_url" == "https://github.com"* ]]; then
 	project_github_url=${si_repo_url%.git}
 	project_github_slug=${project_github_url#https://github.com/}
 fi
-project_site=
+project_site=""
 
 # Bare carriage-return character.
 carriage_return=$( printf "\r" )
@@ -753,14 +753,14 @@ if [ -z "$pkgmeta_file" ]; then
 fi
 
 # Variables set via .pkgmeta.
-package=
-manual_changelog=
-changelog=
+package=""
+manual_changelog=""
+changelog=""
 changelog_markup="text"
-enable_nolib_creation=
-ignore=
-contents=
-nolib_exclude=
+enable_nolib_creation=""
+ignore=""
+contents=""
+nolib_exclude=""
 wowi_gen_changelog="true"
 wowi_archive="true"
 wowi_convert_changelog="true"
@@ -777,7 +777,7 @@ parse_ignore() {
 		copypath="$2/"
 	fi
 
-	yaml_eof=
+	yaml_eof=""
 	while [ -z "$yaml_eof" ]; do
 		IFS='' read -r yaml_line || yaml_eof="true"
 		# Skip commented out lines.
@@ -827,7 +827,7 @@ if [ -f "$pkgmeta_file" ]; then
 		exit 1
 	fi
 
-	yaml_eof=
+	yaml_eof=""
 	while [ -z "$yaml_eof" ]; do
 		IFS='' read -r yaml_line || yaml_eof="true"
 		# Skip commented out lines.
@@ -862,17 +862,17 @@ if [ -f "$pkgmeta_file" ]; then
 				;;
 			wowi-create-changelog)
 				if [ "$yaml_value" = "no" ]; then
-					wowi_gen_changelog=
+					wowi_gen_changelog=""
 				fi
 				;;
 			wowi-convert-changelog)
 				if [ "$yaml_value" = "no" ]; then
-					wowi_convert_changelog=
+					wowi_convert_changelog=""
 				fi
 				;;
 			wowi-archive-previous)
 				if [ "$yaml_value" = "no" ]; then
-					wowi_archive=
+					wowi_archive=""
 				fi
 				;;
 			esac
@@ -1157,9 +1157,9 @@ fi
 unset toc_file_data
 
 # unset project ids if they are set to 0
-[ "$slug" = "0" ] && slug=
-[ "$addonid" = "0" ] && addonid=
-[ "$wagoid" = "0" ] && wagoid=
+[ "$slug" = "0" ] && slug=""
+[ "$addonid" = "0" ] && addonid=""
+[ "$wagoid" = "0" ] && wagoid=""
 
 # Automatic file type detection based on CurseForge rules
 # 1) Untagged commits will be marked as an alpha.
@@ -1252,7 +1252,7 @@ vcs_filter() {
 
 # Find URL of localization api.
 set_localization_url() {
-	localization_url=
+	localization_url=""
 	if [ -n "$slug" ] && [ -n "$cf_token" ] && [ -n "$project_site" ]; then
 		localization_url="${project_site}/api/projects/$slug/localization/export"
 	fi
@@ -1266,16 +1266,16 @@ set_localization_url() {
 # https://authors.curseforge.com/knowledge-base/projects/531-localization-substitutions/
 declare -A unlocalized_values=( ["english"]="ShowPrimary" ["comment"]="ShowPrimaryAsComment" ["blank"]="ShowBlankAsComment" ["ignore"]="Ignore" )
 localization_filter() {
-	_ul_eof=
+	_ul_eof=""
 	while [ -z "$_ul_eof" ]; do
 		IFS='' read -r _ul_line || _ul_eof="true"
 		# Strip any trailing CR character.
 		_ul_line=${_ul_line%$carriage_return}
 		case $_ul_line in
 		*@localization\(*\)@*)
-			_ul_lang=
-			_ul_namespace=
-			_ul_singlekey=
+			_ul_lang=""
+			_ul_namespace=""
+			_ul_singlekey=""
 			_ul_tablename="L"
 			# Get the prefix of the line before the comment.
 			_ul_prefix=${_ul_line%%@localization(*}
@@ -1487,15 +1487,15 @@ line_ending_filter() {
 # are subject to repository keyword replacement.
 #
 copy_directory_tree() {
-	_cdt_alpha=
-	_cdt_debug=
-	_cdt_ignored_patterns=
-	_cdt_localization=
-	_cdt_nolib=
-	_cdt_do_not_package=
-	_cdt_unchanged_patterns=
-	_cdt_classic=
-	_cdt_external=
+	_cdt_alpha=""
+	_cdt_debug=""
+	_cdt_ignored_patterns=""
+	_cdt_localization=""
+	_cdt_nolib=""
+	_cdt_do_not_package=""
+	_cdt_unchanged_patterns=""
+	_cdt_classic=""
+	_cdt_external=""
 	OPTIND=1
 	while getopts :adi:lnpu:c:e _cdt_opt "$@"; do
 		# shellcheck disable=2220
@@ -1541,7 +1541,7 @@ copy_directory_tree() {
 		file=${file#./}
 		if [ -f "$_cdt_srcdir/$file" ]; then
 			# Check if the file should be ignored.
-			skip_copy=
+			skip_copy=""
 			# Prefix external files with the relative pkgdir path
 			_cdt_check_file=$file
 			if [ -n "${_cdt_destdir#$pkgdir}" ]; then
@@ -1552,9 +1552,9 @@ copy_directory_tree() {
 				skip_copy="true"
 			fi
 			# Never skip files that match the colon-separated "unchanged" shell wildcard patterns.
-			unchanged=
+			unchanged=""
 			if [ -n "$skip_copy" ] && match_pattern "$file" "$_cdt_unchanged_patterns"; then
-				skip_copy=
+				skip_copy=""
 				unchanged="true"
 			fi
 			# Copy unskipped files into $_cdt_destdir.
@@ -1646,7 +1646,7 @@ if [ -z "$skip_copying" ]; then
 fi
 
 # Reset ignore and parse pkgmeta ignores again to handle ignoring external paths
-ignore=
+ignore=""
 parse_ignore "$pkgmeta_file"
 
 ###
@@ -1710,7 +1710,7 @@ checkout_external() {
 	elif [ "$_external_type" = "svn" ]; then
 		if [[ $external_uri == *"/trunk" ]]; then
 			_cqe_svn_trunk_url=$_external_uri
-			_cqe_svn_subdir=
+			_cqe_svn_subdir=""
 		else
 			_cqe_svn_trunk_url="${_external_uri%/trunk/*}/trunk"
 			_cqe_svn_subdir=${_external_uri#${_cqe_svn_trunk_url}/}
@@ -1772,7 +1772,7 @@ checkout_external() {
 		# Note: We don't actually do localization since we need the project id and
 		# the only way to convert slug->id would be to scrape the project page :\
 		slug= #$_external_slug
-		project_site=
+		project_site=""
 		if [[ "$_external_uri" == *"wowace.com"* || "$_external_uri" == *"curseforge.com"* ]]; then
 			project_site="https://wow.curseforge.com"
 		fi
@@ -1788,12 +1788,12 @@ checkout_external() {
 
 external_pids=()
 
-external_dir=
-external_uri=
-external_tag=
-external_type=
-external_slug=
-external_checkout_type=
+external_dir=""
+external_uri=""
+external_tag=""
+external_type=""
+external_slug=""
+external_checkout_type=""
 process_external() {
 	if [ -n "$external_dir" ] && [ -n "$external_uri" ] && [ -z "$skip_externals" ]; then
 		# convert old curse repo urls
@@ -1854,12 +1854,12 @@ process_external() {
 		checkout_external "$external_dir" "$external_uri" "$external_tag" "$external_type" "$external_slug" "$external_checkout_type" &> "$releasedir/.$BASHPID.externalout" &
 		external_pids+=($!)
 	fi
-	external_dir=
-	external_uri=
-	external_tag=
-	external_type=
-	external_slug=
-	external_checkout_type=
+	external_dir=""
+	external_uri=""
+	external_tag=""
+	external_type=""
+	external_slug=""
+	external_checkout_type=""
 }
 
 # Don't leave extra files around if exited early
@@ -1870,7 +1870,7 @@ kill_externals() {
 trap kill_externals INT
 
 if [ -z "$skip_externals" ] && [ -f "$pkgmeta_file" ]; then
-	yaml_eof=
+	yaml_eof=""
 	while [ -z "$yaml_eof" ]; do
 		IFS='' read -r yaml_line || yaml_eof="true"
 		# Skip commented out lines.
@@ -2026,7 +2026,7 @@ if [ -n "$manual_changelog" ] && [ -f "$topdir/$changelog" ]; then
 else
 	if [ -n "$manual_changelog" ]; then
 		echo "Warning! Could not find a manual changelog at $topdir/$changelog"
-		manual_changelog=
+		manual_changelog=""
 	fi
 	changelog="CHANGELOG.md"
 	changelog_markup="markdown"
@@ -2037,13 +2037,13 @@ else
 
 	start_group "Generating changelog of commits into $changelog" "changelog"
 
-	_changelog_range=
+	_changelog_range=""
 	if [ "$repository_type" = "git" ]; then
-		changelog_url=
-		changelog_version=
+		changelog_url=""
+		changelog_version=""
 		changelog_previous="[Previous Releases](${project_github_url}/releases)"
-		changelog_url_wowi=
-		changelog_version_wowi=
+		changelog_url_wowi=""
+		changelog_version_wowi=""
 		changelog_previous_wowi="[url=${project_github_url}/releases]Previous Releases[/url]"
 		if [ -z "$previous_version" ] && [ -z "$tag" ]; then
 			# no range, show all commits up to ours
@@ -2076,16 +2076,16 @@ else
 		fi
 		# lazy way out
 		if [ -z "$project_github_url" ]; then
-			changelog_url=
+			changelog_url=""
 			changelog_version=$project_version
-			changelog_previous=
-			changelog_url_wowi=
+			changelog_previous=""
+			changelog_url_wowi=""
 			changelog_version_wowi="[color=orange]${project_version}[/color]"
-			changelog_previous_wowi=
+			changelog_previous_wowi=""
 		elif [ -z "$github_token" ]; then
 			# not creating releases :(
-			changelog_previous=
-			changelog_previous_wowi=
+			changelog_previous=""
+			changelog_previous_wowi=""
 		fi
 		changelog_date=$( TZ='' printf "%(%Y-%m-%d)T" "$project_timestamp" )
 
@@ -2206,7 +2206,7 @@ fi
 ###
 
 if [ -f "$pkgmeta_file" ]; then
-	yaml_eof=
+	yaml_eof=""
 	while [ -z "$yaml_eof" ]; do
 		IFS='' read -r yaml_line || yaml_eof="true"
 		# Skip commented out lines.
@@ -2293,7 +2293,7 @@ if [ -z "$skip_zipfile" ]; then
 		archive_label="$nolib_archive_label"
 		archive_name="$nolib_archive_name"
 		archive="$nolib_archive"
-		nolib_archive=
+		nolib_archive=""
 	fi
 
 	if [ -n "$GITHUB_ACTIONS" ]; then
@@ -2353,10 +2353,10 @@ if [ -z "$skip_zipfile" ]; then
 	if [[ -n "$upload_curseforge" || -n "$upload_wowinterface" || -n "$upload_github" || -n "$upload_wago" ]] && ! hash jq &>/dev/null; then
 		echo "Skipping upload because \"jq\" was not found."
 		echo
-		upload_curseforge=
-		upload_wowinterface=
-		upload_wago=
-		upload_github=
+		upload_curseforge=""
+		upload_wowinterface=""
+		upload_wago=""
+		upload_github=""
 		exit_code=1
 	fi
 
@@ -2378,47 +2378,38 @@ if [ -z "$skip_zipfile" ]; then
 		_site_version_data=$( curl -s -H "x-api-token: $cf_token" "$url" )
 		
 		if [ -n "$_site_version_data" ]; then
-			
 			for type in "${!game_versions[@]}"; do
 				
 				tmp_game_version="${game_versions[$type]}"
 				tmp_game_version_id=""
-				#echo "$type game version = $tmp_game_version"
 				
 				if [ -n "$tmp_game_version" ]; then
 					tmp_game_version_id=$( printf '%s' "$_site_version_data" | jq -c --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
-					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 					if [ -n "$tmp_game_version_id" ]; then
 						# and now the reverse, since an invalid version will just be dropped
 						tmp_game_version=$( printf '%s' "$_site_version_data" | jq -r --argjson v "$tmp_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
 					fi
-					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
+					echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
 					exit_code=1
 				else
-					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 					upload_curseforge="yes"
 				fi
 			done
 			
 			if [ -n "$upload_curseforge" ]; then
-				
 				for type in classic bcc retail; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
-				#echo "_site_game_version = $_site_game_version"
 				
-				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
 				if [[ -n "$_site_game_version" ]]; then
 					# put the ids in the right order.  not really needed but it doesnt hurt anytihng.
-						# i thought it would matter what order the versions were listed in but nope.
-						# a multi tagged file always seem to show up with bcc as "primary" version in the file list.  maybe theres something i missed.
 					for type in retail bcc classic; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
@@ -2427,10 +2418,8 @@ if [ -z "$skip_zipfile" ]; then
 					# join them together
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
-				#echo "_site_game_version_id = $_site_game_version_id"
-				
 			else
-				echo "None of your toc versions are compatible with $_site_name"
+				echo "None of your toc versions are supported by $_site_name"
 				echo
 				echo "Skipping upload to $_site_name"
 				echo
@@ -2447,7 +2436,7 @@ if [ -z "$skip_zipfile" ]; then
 	
 	# Upload to CurseForge.
 	if [ -n "$upload_curseforge" ]; then
-		_cf_payload=$( cat <<-EOF
+		_site_payload=$( cat <<-EOF
 		{
 		  "displayName": "$archive_label",
 		  "gameVersions": [$_site_game_version_id],
@@ -2457,18 +2446,18 @@ if [ -z "$skip_zipfile" ]; then
 		}
 		EOF
 		)
-		_cf_payload_relations=
+		_site_payload_relations=""
 		for i in "${!relations[@]}"; do
-			_cf_payload_relations="$_cf_payload_relations{\"slug\":\"$i\",\"type\":\"${relations[$i]}\"},"
+			_site_payload_relations="$_site_payload_relations{\"slug\":\"$i\",\"type\":\"${relations[$i]}\"},"
 		done
-		if [[ -n $_cf_payload_relations ]]; then
-			_cf_payload_relations="{\"relations\":{\"projects\":[${_cf_payload_relations%,}]}}"
-			_cf_payload=$( echo "$_cf_payload $_cf_payload_relations" | jq -s -c '.[0] * .[1]' )
+		if [[ -n $_site_payload_relations ]]; then
+			_site_payload_relations="{\"relations\":{\"projects\":[${_site_payload_relations%,}]}}"
+			_site_payload=$( echo "$_site_payload $_site_payload_relations" | jq -s -c '.[0] * .[1]' )
 		fi
 
 		echo "Uploading $archive_name ($_site_game_version $file_type) to $project_site/projects/$slug"
 		resultfile="$releasedir/cf_result.json"
-		result=$( echo "$_cf_payload" | curl -sS --retry 3 --retry-delay 10 \
+		result=$( echo "$_site_payload" | curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "x-api-token: $cf_token" \
 				-F "metadata=<-" \
@@ -2520,40 +2509,32 @@ if [ -z "$skip_zipfile" ]; then
 		_site_version_data=$( curl -s -H "x-api-token: $wowi_token" "$url" )
 		
 		if [ -n "$_site_version_data" ]; then
-			
 			for type in "${!game_versions[@]}"; do
 				
 				tmp_game_version="${game_versions[$type]}"
 				tmp_game_version_id=""
-				#echo "$type game version = $tmp_game_version"
 				
 				if [ -n "$tmp_game_version" ]; then
 					tmp_game_version_id=$( echo "$_site_version_data" | jq -r --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.id as $x | $v | index($x)) | .id) | join(",")' 2>/dev/null )
-					#echo "wowi game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
-				#tmp_game_version_id=$( echo "$_site_version_data" | jq -r '.[] | select(.default == true) | .id' 2>/dev/null )
-				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
+					echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
 					exit_code=1
 				else
-					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 					upload_wowinterface="yes"
 				fi
 			done
 			
 			if [ -n "$upload_wowinterface" ]; then
-				
 				for type in classic bcc retail; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
-				#echo "_site_game_version = $_site_game_version"
 				
-				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
 				if [[ -n "$_site_game_version" ]]; then
 					# put the ids in the right order
 					for type in retail bcc classic; do
@@ -2564,10 +2545,8 @@ if [ -z "$skip_zipfile" ]; then
 					# join them together
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
-				#echo "_site_game_version_id = $_site_game_version_id"
-				
 			else
-				echo "None of your toc versions are compatible with $_site_name"
+				echo "None of your toc versions are supported by $_site_name"
 				echo
 				echo "Skipping upload to $_site_name."
 				echo
@@ -2581,7 +2560,7 @@ if [ -z "$skip_zipfile" ]; then
 			exit_code=1
 		fi
 	fi
-
+	
 	# Upload to WoWInterface.
 	if [ -n "$upload_wowinterface" ]; then
 		_site_args=()
@@ -2593,7 +2572,7 @@ if [ -z "$skip_zipfile" ]; then
 		if [ -z "$wowi_archive" ]; then
 			_site_args+=("-F archive=No")
 		fi
-
+		
 		echo "Uploading $archive_name ($_site_game_version) to https://www.wowinterface.com/downloads/info$addonid"
 		resultfile="$releasedir/wi_result.json"
 		result=$( curl -sS --retry 3 --retry-delay 10 \
@@ -2632,11 +2611,11 @@ if [ -z "$skip_zipfile" ]; then
 		} || {
 			exit_code=1
 		}
-
+		
 		rm -f "$resultfile" 2>/dev/null
 		echo
 	fi
-
+	
 	echo "wago = -z [$skip_upload] && -n [$wagoid] && -n [$wago_token]"
 	if [ -n "$upload_wago" ] ; then
 		upload_wago=""
@@ -2663,10 +2642,10 @@ if [ -z "$skip_zipfile" ]; then
 			fi
 			
 			if [ -z "$tmp_game_version_id" ]; then
-				echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
+				echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
 				exit_code=1
 			else
-				echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+				echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 				tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 				upload_wago="yes"
 			fi
@@ -2678,6 +2657,7 @@ if [ -z "$skip_zipfile" ]; then
 					_site_game_version="${game_versions[$type]}"
 				fi
 			done
+			
 			if [[ -n "$_site_game_version" ]]; then
 				for type in retail bcc classic; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
@@ -2687,7 +2667,7 @@ if [ -z "$skip_zipfile" ]; then
 				_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 			fi
 		else
-			echo "None of your toc versions are compatible with $_site_name"
+			echo "None of your toc versions are supported by $_site_name"
 			echo
 			echo "Skipping upload to $_site_name"
 			echo
@@ -2702,7 +2682,7 @@ if [ -z "$skip_zipfile" ]; then
 		if [ "$file_type" = "release" ]; then
 			_site_stability="stable"
 		fi
-
+		
 		_site_payload=$( cat <<-EOF
 		{
 		  "label": "$archive_label",
@@ -2712,7 +2692,7 @@ if [ -z "$skip_zipfile" ]; then
 		}
 		EOF
 		)
-
+		
 		echo "Uploading $archive_name ($_site_game_version $file_type) to $_site_name"
 		resultfile="$releasedir/wago_result.json"
 		result=$( echo "$_site_payload" | curl -sS --retry 3 --retry-delay 10 \
@@ -2745,7 +2725,7 @@ if [ -z "$skip_zipfile" ]; then
 		} || {
 			exit_code=1
 		}
-
+		
 		rm -f "$resultfile" 2>/dev/null
 		echo
 	fi
