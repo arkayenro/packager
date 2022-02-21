@@ -1102,7 +1102,7 @@ if [[ -z "$toc_multi" ]]; then
 			game_type="retail"
 		elif [[ -n "$game_type_toc_version" ]]; then
 			# use the game version value if set
-			toc_version="$game_type_toc_version"
+			SS="$game_type_toc_version"
 		fi
 		# Check for other interface lines
 		if [[ -z "$toc_version" ]] || \
@@ -2363,21 +2363,21 @@ if [ -z "$skip_zipfile" ]; then
 	echo "cf = -z [$skip_upload] && -z [$skip_cf_upload] && -n [$slug] && -n [$cf_token] && -n [$project_site]"
 	if [ -n "$upload_curseforge" ]; then
 		upload_curseforge=""
-		sitename="CurseForge"
-		echo "Processing $sitename"
+		_site_name="CurseForge"
+		echo "Processing $_site_name"
 		
-		cf_game_version=""
-		cf_game_version_id=""
-		cf_game_version_ids=()
+		_site_game_version=""
+		_site_game_version_id=""
+		_site_game_version_ids=()
 		declare -A tmp_game_version_ids=()
 		tmp_game_version=""
 		tmp_game_version_id=""
 		
-		echo "fetching game version data from $sitename"
+		echo "fetching game version data from $_site_name"
 		url="$project_site/api/game/versions"
-		cf_version_data=$( curl -s -H "x-api-token: $cf_token" "$url" )
+		_site_version_data=$( curl -s -H "x-api-token: $cf_token" "$url" )
 		
-		if [ -n "$cf_version_data" ]; then
+		if [ -n "$_site_version_data" ]; then
 			
 			for type in "${!game_versions[@]}"; do
 				
@@ -2386,20 +2386,20 @@ if [ -z "$skip_zipfile" ]; then
 				#echo "$type game version = $tmp_game_version"
 				
 				if [ -n "$tmp_game_version" ]; then
-					tmp_game_version_id=$( printf '%s' "$cf_version_data" | jq -c --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
+					tmp_game_version_id=$( printf '%s' "$_site_version_data" | jq -c --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null )
 					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 					if [ -n "$tmp_game_version_id" ]; then
 						# and now the reverse, since an invalid version will just be dropped
-						tmp_game_version=$( printf '%s' "$cf_version_data" | jq -r --argjson v "$tmp_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
+						tmp_game_version=$( printf '%s' "$_site_version_data" | jq -r --argjson v "$tmp_game_version_id" 'map(select(.id as $x | $v | index($x)) | .name) | join(",")' 2>/dev/null )
 					fi
 					#echo "cf game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Removed $type game version ${game_versions[$type]} as it is not available on $sitename"
+					echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
 					exit_code=1
 				else
-					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 					upload_curseforge="yes"
 				fi
@@ -2409,37 +2409,37 @@ if [ -z "$skip_zipfile" ]; then
 				
 				for type in classic bcc retail; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-						cf_game_version="${game_versions[$type]}"
+						_site_game_version="${game_versions[$type]}"
 					fi
 				done
-				#echo "cf_game_version = $cf_game_version"
+				#echo "_site_game_version = $_site_game_version"
 				
 				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
-				if [[ -n "$cf_game_version" ]]; then
+				if [[ -n "$_site_game_version" ]]; then
 					# put the ids in the right order.  not really needed but it doesnt hurt anytihng.
 						# i thought it would matter what order the versions were listed in but nope.
 						# a multi tagged file always seem to show up with bcc as "primary" version in the file list.  maybe theres something i missed.
 					for type in retail bcc classic; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-							cf_game_version_ids+=("${tmp_game_version_ids[$type]}")
+							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
 					done
 					# join them together
-					cf_game_version_id=$(IFS=, ; echo "${cf_game_version_ids[*]}") # join them with a comma
+					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
-				#echo "cf_game_version_id = $cf_game_version_id"
+				#echo "_site_game_version_id = $_site_game_version_id"
 				
 			else
-				echo "None of your toc versions are compatible with $sitename"
+				echo "None of your toc versions are compatible with $_site_name"
 				echo
-				echo "Skipping upload to $sitename"
+				echo "Skipping upload to $_site_name"
 				echo
 				exit_code=1
 			fi
 		else
-			echo "Error fetching $sitename game version data from $url"
+			echo "Error fetching $_site_name game version data from $url"
 			echo
-			echo "Skipping upload to $sitename"
+			echo "Skipping upload to $_site_name"
 			echo
 			exit_code=1
 		fi
@@ -2450,7 +2450,7 @@ if [ -z "$skip_zipfile" ]; then
 		_cf_payload=$( cat <<-EOF
 		{
 		  "displayName": "$archive_label",
-		  "gameVersions": [$cf_game_version_id],
+		  "gameVersions": [$_site_game_version_id],
 		  "releaseType": "$file_type",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
 		  "changelogType": "$changelog_markup"
@@ -2466,7 +2466,7 @@ if [ -z "$skip_zipfile" ]; then
 			_cf_payload=$( echo "$_cf_payload $_cf_payload_relations" | jq -s -c '.[0] * .[1]' )
 		fi
 
-		echo "Uploading $archive_name ($cf_game_version $file_type) to $project_site/projects/$slug"
+		echo "Uploading $archive_name ($_site_game_version $file_type) to $project_site/projects/$slug"
 		resultfile="$releasedir/cf_result.json"
 		result=$( echo "$_cf_payload" | curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
@@ -2503,24 +2503,23 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 	echo "wowi = -z [$skip_upload] && -n [$tag] && -n [$addonid] && -n [$wowi_token]"
-	#echo "upload_wowinterface=[$skip_upload] [$tag] [$addonid] [$wowi_token]"
 	if [ -n "$upload_wowinterface" ]; then
 		upload_wowinterface=""
-		sitename="WowInterface"
-		echo "Processing $sitename"
+		_site_name="WowInterface"
+		echo "Processing $_site_name"
 		
-		wowi_game_version=
-		wowi_game_version_id=""
-		wowi_game_version_ids=()
+		_site_game_version=""
+		_site_game_version_id=""
+		_site_game_version_ids=()
 		declare -A tmp_game_version_ids=()
 		tmp_game_version=""
 		tmp_game_version_id=""
 		
-		echo "fetching game version data from $sitename"
+		echo "fetching game version data from $_site_name"
 		url="https://api.wowinterface.com/addons/compatible.json"
-		wowi_version_data=$( curl -s -H "x-api-token: $wowi_token" "$url" )
+		_site_version_data=$( curl -s -H "x-api-token: $wowi_token" "$url" )
 		
-		if [ -n "$wowi_version_data" ]; then
+		if [ -n "$_site_version_data" ]; then
 			
 			for type in "${!game_versions[@]}"; do
 				
@@ -2529,14 +2528,14 @@ if [ -z "$skip_zipfile" ]; then
 				#echo "$type game version = $tmp_game_version"
 				
 				if [ -n "$tmp_game_version" ]; then
-					tmp_game_version_id=$( echo "$wowi_version_data" | jq -r --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.id as $x | $v | index($x)) | .id) | join(",")' 2>/dev/null )
+					tmp_game_version_id=$( echo "$_site_version_data" | jq -r --argjson v "[\"${tmp_game_version//,/\",\"}\"]" 'map(select(.id as $x | $v | index($x)) | .id) | join(",")' 2>/dev/null )
 					#echo "wowi game version $tmp_game_version = $tmp_game_version_id"
 				fi
 				
-				#tmp_game_version_id=$( echo "$wowi_version_data" | jq -r '.[] | select(.default == true) | .id' 2>/dev/null )
+				#tmp_game_version_id=$( echo "$_site_version_data" | jq -r '.[] | select(.default == true) | .id' 2>/dev/null )
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Removed $type game version ${game_versions[$type]} as it is not available on $sitename"
+					echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
 					exit_code=1
 				else
 					echo "your $type version = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
@@ -2549,61 +2548,61 @@ if [ -z "$skip_zipfile" ]; then
 				
 				for type in classic bcc retail; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-						wowi_game_version="${game_versions[$type]}"
+						_site_game_version="${game_versions[$type]}"
 					fi
 				done
-				#echo "wowi_game_version = $wowi_game_version"
+				#echo "_site_game_version = $_site_game_version"
 				
 				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
-				if [[ -n "$wowi_game_version" ]]; then
+				if [[ -n "$_site_game_version" ]]; then
 					# put the ids in the right order
 					for type in retail bcc classic; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
-							wowi_game_version_ids+=("${tmp_game_version_ids[$type]}")
+							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
 					done
 					# join them together
-					wowi_game_version_id=$(IFS=, ; echo "${wowi_game_version_ids[*]}") # join them with a comma
+					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
-				#echo "wowi_game_version_id = $wowi_game_version_id"
+				#echo "_site_game_version_id = $_site_game_version_id"
 				
 			else
-				echo "None of your toc versions are compatible with $sitename"
+				echo "None of your toc versions are compatible with $_site_name"
 				echo
-				echo "Skipping upload to $sitename."
+				echo "Skipping upload to $_site_name."
 				echo
 				exit_code=1
 			fi
 		else
-			echo "Error fetching $sitename game version info from $url"
+			echo "Error fetching $_site_name game version info from $url"
 			echo
-			echo "Skipping upload to $sitename"
+			echo "Skipping upload to $_site_name"
 			echo
 			exit_code=1
 		fi
 	fi
 
-	# Upload tags to WoWInterface.
+	# Upload to WoWInterface.
 	if [ -n "$upload_wowinterface" ]; then
-		_wowi_args=()
+		_site_args=()
 		if [ -f "$wowi_changelog" ]; then
-			_wowi_args+=("-F changelog=<$wowi_changelog")
+			_site_args+=("-F changelog=<$wowi_changelog")
 		elif [ -n "$manual_changelog" ] || [ "$wowi_markup" = "markdown" ]; then
-			_wowi_args+=("-F changelog=<$pkgdir/$changelog")
+			_site_args+=("-F changelog=<$pkgdir/$changelog")
 		fi
 		if [ -z "$wowi_archive" ]; then
-			_wowi_args+=("-F archive=No")
+			_site_args+=("-F archive=No")
 		fi
 
-		echo "Uploading $archive_name ($wowi_game_version) to https://www.wowinterface.com/downloads/info$addonid"
+		echo "Uploading $archive_name ($_site_game_version) to https://www.wowinterface.com/downloads/info$addonid"
 		resultfile="$releasedir/wi_result.json"
 		result=$( curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "x-api-token: $wowi_token" \
 				-F "id=$addonid" \
 				-F "version=$archive_version" \
-				-F "compatible=$wowi_game_version_id" \
-				"${_wowi_args[@]}" \
+				-F "compatible=$_site_game_version_id" \
+				"${_site_args[@]}" \
 				-F "updatefile=@$archive" \
 				"https://api.wowinterface.com/addons/update"
 		) && {
@@ -2639,40 +2638,84 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 	echo "wago = -z [$skip_upload] && -n [$wagoid] && -n [$wago_token]"
+	if [ -n "$upload_wago" ] ; then
+		upload_wago=""
+		_site_name="Wago Addons"
+		echo "Processing $_site_name"
+		
+		_site_game_version=""
+		_site_game_version_id=""
+		_site_game_version_ids=()
+		declare -A tmp_game_version_ids=()
+		tmp_game_version=""
+		tmp_game_version_id=""
+		
+		_site_support_property=""
+		for type in "${!toc_versions[@]}"; do
+			
+			tmp_game_version="${game_versions[$type]}"
+			tmp_game_version_id="${game_versions[$type]}"
+			
+			if [[ "$type" == "bcc" ]]; then
+				_site_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
+			else
+				_site_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
+			fi
+			
+			if [ -z "$tmp_game_version_id" ]; then
+				echo "Removed $type game version ${game_versions[$type]} as it is not available on $_site_name"
+				exit_code=1
+			else
+				echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, cf version = $tmp_game_version, cf version id = $tmp_game_version_id"
+				tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
+				upload_wago="yes"
+			fi
+		done
+		
+		if [ -n "$upload_wago" ]; then
+			for type in classic bcc retail; do
+				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+					_site_game_version="${game_versions[$type]}"
+				fi
+			done
+			if [[ -n "$_site_game_version" ]]; then
+				for type in retail bcc classic; do
+					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
+						_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
+					fi
+				done
+				_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
+			fi
+		else
+			echo "None of your toc versions are compatible with $_site_name"
+			echo
+			echo "Skipping upload to $_site_name"
+			echo
+			exit_code=1
+		fi
+		
+	fi
+	
 	# Upload to Wago
 	if [ -n "$upload_wago" ] ; then
-		sitename="Wago Addons"
-		echo "Processing $sitename"
-		
-		_wago_support_property=""
-		for type in "${!toc_versions[@]}"; do
-			if [[ "$type" == "bcc" ]]; then
-				_wago_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
-			else
-				_wago_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
-			fi
-			echo "your $type version = ${game_versions[$type]}, wago currently has no version limitations"
-
-		done
-
-		_wago_stability="$file_type"
+		_site_stability="$file_type"
 		if [ "$file_type" = "release" ]; then
-			_wago_stability="stable"
+			_site_stability="stable"
 		fi
 
-		_wago_payload=$( cat <<-EOF
+		_site_payload=$( cat <<-EOF
 		{
 		  "label": "$archive_label",
-		  $_wago_support_property
-		  "stability": "$_wago_stability",
+		  $_site_support_property
+		  "stability": "$_site_stability",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" )
 		}
 		EOF
 		)
 
-		echo "Uploading $archive_name ($game_version $file_type) to Wago"
+		echo "Uploading $archive_name ($_site_game_version $file_type) to $_site_name"
 		resultfile="$releasedir/wago_result.json"
-		result=$( echo "$_wago_payload" | curl -sS --retry 3 --retry-delay 10 \
+		result=$( echo "$_site_payload" | curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "authorization: Bearer $wago_token" \
 				-H "accept: application/json" \
@@ -2710,8 +2753,8 @@ if [ -z "$skip_zipfile" ]; then
 	echo "gh = -z [$skip_upload] && -n [$tag] && -n [$project_github_slug] && -n [$github_token]"
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
 	if [ -n "$upload_github" ]; then
-		sitename="GitHub"
-		echo "Processing $sitename"
+		_site_name="GitHub"
+		echo "Processing $_site_name"
 		
 		upload_github_asset() {
 			_ghf_release_id=$1
