@@ -31,7 +31,7 @@ what it will do, so dont use it.
 
 All you need to do is setup toc files for the clients that your addon supports (with
 the appropriate interface versions in them) and a single zip file will be built, uploaded,
-and tagged for each of the interface versions that the hosting site accepts.
+and tagged for each of the interface versions that the hosting site supports.
 
 note - some of the hosting sites do not support all interface versions.
 Where they do not support a specific interface version you have set then that
