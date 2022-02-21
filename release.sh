@@ -2415,7 +2415,9 @@ if [ -z "$skip_zipfile" ]; then
 				
 				#echo "tmp_game_version_ids = ${tmp_game_version_ids[@]}"
 				if [[ -n "$cf_game_version" ]]; then
-					# put the ids in the right order
+					# put the ids in the right order.  not really needed but it doesnt hurt anytihng.
+						# i thought it would matter what order the versions were listed in but nope.
+						# a multi tagged file always seem to show up with bcc as "primary" version in the file list.  maybe theres something i missed.
 					for type in retail bcc classic; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							cf_game_version_ids+=("${tmp_game_version_ids[$type]}")
@@ -2438,7 +2440,7 @@ if [ -z "$skip_zipfile" ]; then
 			echo
 			echo "Skipping upload to $sitename"
 			echo
-			exitcode=1
+			exit_code=1
 		fi
 	fi
 	
