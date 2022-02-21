@@ -3,23 +3,23 @@
 This fork is designed to handle multiple client specific TOC files.
 
 - Retail
-  1. AddOnName_Mainline.toc
-  2. AddOnName-Mainline.toc
-  3. AddOnName.toc
+  - AddOnName_Mainline.toc
+  - AddOnName-Mainline.toc
+  - AddOnName.toc
 
 - BCC
-  1. AddOnName_TBC.toc
-  2. AddOnName_BCC.toc
-  3. AddOnName-TBC.toc
-  4. AddOnName-BCC.toc
-  5. AddOnName.toc
+  - AddOnName_TBC.toc
+  - AddOnName_BCC.toc
+  - AddOnName-TBC.toc
+  - AddOnName-BCC.toc
+  - AddOnName.toc
 
 - Classic Era
-  1. AddOnName_Vanilla.toc
-  2. AddOnName_Classic.toc
-  3. AddOnName-Vanilla.toc
-  4. AddOnName-Classic.toc
-  5. AddOnName.toc
+  - AddOnName_Vanilla.toc
+  - AddOnName_Classic.toc
+  - AddOnName-Vanilla.toc
+  - AddOnName-Classic.toc
+  - AddOnName.toc
 
 
 While you do not require an AddOnName.toc if you have an AddOnName-Mainline.toc
