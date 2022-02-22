@@ -1040,14 +1040,11 @@ done
 # find the newest client based toc to use as the primary for the rest of the old code
 toc_multi=""
 for type in "${game_version_order[@]}"; do
-	echo "type = $type"
 	if [[ -n "${toc_paths[$type]}" ]]; then
 		toc_multi="${toc_paths[$type]}"
 		game_type="$type"
-		echo "$game_type / $toc_multi"
 	fi
 done
-echo "highest = $game_type / $toc_multi"
 
 
 # generate package name based off the first TOC filename found
