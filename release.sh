@@ -64,7 +64,7 @@ wowi_markup="bbcode"
 
 ## TESTING OPTIONS
 
-test_local="yes"
+test_local=""
 if [[ -n "$test_local" ]]; then
 	tag="1.00.00"
 	CF_API_KEY="" # dont uploaded with this set
