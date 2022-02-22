@@ -64,7 +64,7 @@ wowi_markup="bbcode"
 
 ## TESTING OPTIONS
 
-test_local=""
+test_local="yes"
 if [[ -n "$test_local" ]]; then
 	tag="1.00.00"
 	CF_API_KEY="" # dont uploaded with this set
@@ -91,6 +91,7 @@ declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
 game_version_order=(classic bcc retail)
+# for type in "${game_version_order[@]}"; do
 # reversed - highest to lowest
 # for (( idx=${#game_version_order[@]}-1; idx > 0; idx-- )); do
 # type="${game_version_order[idx]}"
@@ -1038,12 +1039,16 @@ done
 
 # find the newest client based toc to use as the primary for the rest of the old code
 toc_multi=""
-for type in "$game_version_order[@]"; do
+for type in "${game_version_order[@]}"; do
+	echo "type = $type"
 	if [[ -n "${toc_paths[$type]}" ]]; then
 		toc_multi="${toc_paths[$type]}"
 		game_type="$type"
+		echo "$game_type / $toc_multi"
 	fi
 done
+echo "highest = $game_type / $toc_multi"
+
 
 # generate package name based off the first TOC filename found
 if [[ -z "$package" ]]; then
@@ -2406,14 +2411,14 @@ if [ -z "$skip_zipfile" ]; then
 			done
 			
 			if [ -n "$upload_curseforge" ]; then
-				for type in "$game_version_order[@]"; do
+				for type in "${game_version_order[@]}"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
 				
 				if [[ -n "$_site_game_version" ]]; then
-					for type in "$game_version_order[@]"; do
+					for type in "${game_version_order[@]}"; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
@@ -2531,14 +2536,14 @@ if [ -z "$skip_zipfile" ]; then
 			done
 			
 			if [ -n "$upload_wowinterface" ]; then
-				for type in "$game_version_order[@]"; do
+				for type in "${game_version_order[@]}"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
 				
 				if [[ -n "$_site_game_version" ]]; then
-					for type in "$game_version_order[@]"; do
+					for type in "${game_version_order[@]}"; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
@@ -2652,14 +2657,14 @@ if [ -z "$skip_zipfile" ]; then
 		done
 		
 		if [ -n "$upload_wago" ]; then
-			for type in "$game_version_order[@]"; do
+			for type in "${game_version_order[@]}"; do
 				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 					_site_game_version="${game_versions[$type]}"
 				fi
 			done
 			
 			if [[ -n "$_site_game_version" ]]; then
-				for type in "$game_version_order[@]"; do
+				for type in "${game_version_order[@]}"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 					fi
