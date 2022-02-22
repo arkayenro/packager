@@ -90,6 +90,10 @@ declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="b
 declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
+game_version_order=(classic bcc retail)
+# reversed - highest to lowest
+# for (( idx=${#game_version_order[@]}-1; idx > 0; idx-- )); do
+# type="${game_version_order[idx]}"
 toc_version=""
 
 # Script return code
@@ -1034,7 +1038,7 @@ done
 
 # find the newest client based toc to use as the primary for the rest of the old code
 toc_multi=""
-for type in classic bcc retail; do
+for type in "$game_version_order[@]"; do
 	if [[ -n "${toc_paths[$type]}" ]]; then
 		toc_multi="${toc_paths[$type]}"
 		game_type="$type"
@@ -2402,15 +2406,14 @@ if [ -z "$skip_zipfile" ]; then
 			done
 			
 			if [ -n "$upload_curseforge" ]; then
-				for type in classic bcc retail; do
+				for type in "$game_version_order[@]"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
 				
 				if [[ -n "$_site_game_version" ]]; then
-					# checking if curse wants the "primary" at the end of the list?
-					for type in classic bcc retail; do
+					for type in "$game_version_order[@]"; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
@@ -2528,20 +2531,18 @@ if [ -z "$skip_zipfile" ]; then
 			done
 			
 			if [ -n "$upload_wowinterface" ]; then
-				for type in classic bcc retail; do
+				for type in "$game_version_order[@]"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
 					fi
 				done
 				
 				if [[ -n "$_site_game_version" ]]; then
-					# put the ids in the right order
-					for type in retail bcc classic; do
+					for type in "$game_version_order[@]"; do
 						if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 							_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 						fi
 					done
-					# join them together
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
 			else
@@ -2651,14 +2652,14 @@ if [ -z "$skip_zipfile" ]; then
 		done
 		
 		if [ -n "$upload_wago" ]; then
-			for type in classic bcc retail; do
+			for type in "$game_version_order[@]"; do
 				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 					_site_game_version="${game_versions[$type]}"
 				fi
 			done
 			
 			if [[ -n "$_site_game_version" ]]; then
-				for type in retail bcc classic; do
+				for type in "$game_version_order[@]"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version_ids+=("${tmp_game_version_ids[$type]}")
 					fi
