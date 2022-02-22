@@ -64,7 +64,7 @@ wowi_markup="bbcode"
 
 ## TESTING OPTIONS
 
-test_local=""
+test_local="yes"
 if [[ -n "$test_local" ]]; then
 	tag="1.00.00"
 	CF_API_KEY="" # dont uploaded with this set
@@ -1015,41 +1015,44 @@ do
 	)
 	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
 	
-	if [[ -z "$type" ]]; then
-		case $tmp_interface in
-			1*) type="classic" ;;
-			2*) type="bcc" ;;
-			*) type="retail"
-		esac
+	if [[ $tmp_interface =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
+		if [[ -z "$type" ]]; then
+			case $tmp_interface in
+				1*) type="classic" ;;
+				2*) type="bcc" ;;
+				*) type="retail"
+			esac
+		fi
+		
+		if [[ -z "${toc_paths[$type]}" ]]; then
+			toc_paths[$type]="$i"
+			toc_versions[$type]="$tmp_interface"
+			game_versions[$type]="$((${BASH_REMATCH[1]#0})).$((${BASH_REMATCH[2]#0})).$((${BASH_REMATCH[3]#0}))"
+			echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
+		else
+			echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
+			exit_code=1
+		fi
+	else
+		echo "type [$type], interface version [$tmp_interface] is invalid, ignoring this toc file"
 	fi
 	
-	if [[ -z "${toc_paths[$type]}" ]]; then
-		toc_paths[$type]="$i"
-		toc_versions[$type]="$tmp_interface"
-		printf -v game_versions[$type] "%d.%d.%d" ${tmp_interface:0:1} ${tmp_interface:1:2} ${tmp_interface:3:2} 2>/dev/null || {
-			echo "TOC interface version \"${tmp_interface}\" is invalid." >&2
-			exit_code=1
-		}
-		echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
-	else
-		echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
-		exit_code=1
-	fi
 done
 
-# find the newest client based toc to use as the primary for the rest of the old code
+# find the newest client based data to use as the primary for the rest of the old code
 toc_multi=""
 for type in "${game_version_order[@]}"; do
 	if [[ -n "${toc_paths[$type]}" ]]; then
-		toc_multi="${toc_paths[$type]}"
+		toc_multi="yes"
 		game_type="$type"
+		toc_path="${toc_paths[$type]}"
+		game_version="${game_versions[$type]}"
 	fi
 done
 
-
-# generate package name based off the first TOC filename found
+# no package-as so generate package name based off the toc filename
 if [[ -z "$package" ]]; then
-	package=$( cd "$topdir" && find *.toc -maxdepth 0 2>/dev/null | head -n1 )
+	package="$toc_path"
 	if [[ -z "$package" ]]; then
 		echo "Could not find an addon TOC file. In another directory? Set 'package-as' in .pkgmeta" >&2
 		exit 1
@@ -1060,16 +1063,7 @@ if [[ -z "$package" ]]; then
 	fi
 fi
 
-toc_path="$package.toc"
-
-if [[ -n "$toc_multi" && "$toc_multi" != "$toc_path" ]]; then
-	# there is a multi toc file, its name is different to the package value
-	# add another check the ensure it starts the same (minus the toc extension)???
-	toc_path="$toc_multi"
-fi
-
 echo "using $toc_path as primary toc file"
-
 
 # Handle having the main addon in a sub dir
 if [[ ! -f "$topdir/$toc_path" && -f "$topdir/$package/$toc_path" ]]; then
@@ -1080,7 +1074,6 @@ if [[ ! -f "$topdir/$toc_path" ]]; then
 	echo "Could not find an addon TOC file. In another directory? Make sure it matches the 'package-as' in .pkgmeta" >&2
 	exit 1
 fi
-
 
 # Get the interface version for setting the upload version.
 toc_file_data=$(
@@ -1143,7 +1136,6 @@ if [[ -z "$toc_multi" ]]; then
 		}
 		game_versions[$game_type]="$game_version"
 	fi
-
 fi
 
 # Get the title of the project for using in the changelog.
