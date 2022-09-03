@@ -2636,12 +2636,6 @@ if [ -z "$skip_zipfile" ]; then
 			tmp_game_version="${game_versions[$type]}"
 			tmp_game_version_id="${game_versions[$type]}"
 			
-			if [[ "$type" == "bcc" ]]; then
-				_site_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
-			else
-				_site_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
-			fi
-			
 			if [ -z "$tmp_game_version_id" ]; then
 				echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
 				exit_code=1
@@ -2649,6 +2643,15 @@ if [ -z "$skip_zipfile" ]; then
 				echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 				tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
 				upload_wago="yes"
+				
+				if [[ "$type" == "bcc" ]]; then
+					_site_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
+				elif [[ "$type" == "wrath" ]]; then
+					_site_support_property+="\"supported_wotlk_patch\": \"${game_versions[$type]}\", "
+				else
+					_site_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
+				fi
+				
 			fi
 		done
 		
