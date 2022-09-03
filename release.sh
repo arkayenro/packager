@@ -439,8 +439,8 @@ fi
 
 # $releasedir must be an absolute path or inside $topdir.
 case $releasedir in
-/*)			;;
-$topdir/*)	;;
+/*);;
+$topdir/*);;
 *)
 	echo "The release directory \"$releasedir\" must be an absolute path or inside \"$topdir\"." >&2
 	exit 1
@@ -992,12 +992,11 @@ fi
 ### Process TOC files
 ###
 
-tmp_paths=()
-while IFS=  read -r -d $'\0'; do
-	tmp_paths+=("$REPLY")
-done < <(cd "$topdir" && find *.toc -maxdepth 0 -print0 2>/dev/null)
+tmp_paths=(
+  "$topdir"/*.toc
+)
 
-for i in "${tmp_paths[@]}"
+for i in "${tmp_paths[@]##*/}"
 do
 	echo "Processing: [$i]"
 	
@@ -1025,7 +1024,7 @@ do
 				1*) type="classic" ;;
 				2*) type="bcc" ;;
 				3*) type="wrath" ;;
-				*) type="retail"
+				9*) type="retail"
 			esac
 		fi
 		
