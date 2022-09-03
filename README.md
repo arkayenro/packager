@@ -7,6 +7,11 @@ This fork is designed to handle multiple and/or client specific TOC files.
   - AddOnName-Mainline.toc
   - AddOnName.toc
 
+- Wrath
+  - AddOnName_Wrath.toc
+  - AddOnName-Wrath.toc
+  - AddOnName.toc
+
 - BCC
   - AddOnName_TBC.toc
   - AddOnName_BCC.toc
