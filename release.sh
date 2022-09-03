@@ -232,11 +232,11 @@ while getopts ":celLzusop:dw:a:r:t:g:m:n:" opt; do
 							usage
 							exit 1
 						fi
-						if [[ ${BASH_REMATCH[1]} == "1" && (${BASH_REMATCH[2]} == "13" || ${BASH_REMATCH[2]} == "14") ]]; then
+						if [[ ${BASH_REMATCH[1]} == "1" ]]; then
 							game_type="classic"
-						elif [[ ${BASH_REMATCH[1]} == "2" && ${BASH_REMATCH[2]} == "5" ]]; then
+						elif [[ ${BASH_REMATCH[1]} == "2" ]]; then
 							game_type="bcc"
-						elif [[ ${BASH_REMATCH[1]} == "3" && ${BASH_REMATCH[2]} == "4" ]]; then
+						elif [[ ${BASH_REMATCH[1]} == "3" ]]; then
 							game_type="wrath"
 						else
 							game_type="retail"
@@ -1021,10 +1021,10 @@ do
 	if [[ $tmp_interface =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
 		if [[ -z "$type" ]]; then
 			case $tmp_interface in
-				1*) type="classic" ;;
-				2*) type="bcc" ;;
-				3*) type="wrath" ;;
-				9*) type="retail"
+				1[0-9][0-9][0-9][0-9]) type="classic" ;;
+				2[0-9][0-9][0-9][0-9]) type="bcc" ;;
+				3[0-9][0-9][0-9][0-9]) type="wrath" ;;
+				*) type="retail"
 			esac
 		fi
 		
@@ -1093,9 +1093,9 @@ if [[ -z "$toc_multi" ]]; then
 	if [[ -n "$toc_version" && -z "$game_type" ]]; then
 		# toc -> game type
 		case $toc_version in
-			11[34]*) game_type="classic" ;;
-			205*) game_type="bcc" ;;
-			304*) game_type="wrath" ;;
+			1[0-9][0-9][0-9][0-9]) game_type="classic" ;;
+			2[0-9][0-9][0-9][0-9]) game_type="bcc" ;;
+			3[0-9][0-9][0-9][0-9]) game_type="wrath" ;;
 			*) game_type="retail"
 		esac
 	else
@@ -1110,18 +1110,18 @@ if [[ -z "$toc_multi" ]]; then
 		fi
 		# Check for other interface lines
 		if [[ -z "$toc_version" ]] || \
-			 [[ "$game_type" == "classic" && ("$toc_version" != "113"* && "$toc_version" != "114"*) ]] || \
-			 [[ "$game_type" == "bcc" && "$toc_version" != "205"* ]] || \
-			 [[ "$game_type" == "wrath" && "$toc_version" != "304"* ]] || \
-			 [[ "$game_type" == "retail" && ("$toc_version" == "113"* || "$toc_version" == "114"* || "$toc_version" == "205"*) ]]
+			 [[ "$game_type" == "classic" && ("$toc_version" != "1[0-9][0-9][0-9][0-9]") ]] || \
+			 [[ "$game_type" == "bcc" && "$toc_version" != "2[0-9][0-9][0-9][0-9]" ]] || \
+			 [[ "$game_type" == "wrath" && "$toc_version" != "3[0-9][0-9][0-9][0-9]" ]] || \
+			 [[ "$game_type" == "retail" && ("$toc_version" == "1[0-9][0-9][0-9][0-9]" || "$toc_version" == "2[0-9][0-9][0-9][0-9]" || "$toc_version" == "3[0-9][0-9][0-9][0-9]") ]]
 		then
 			toc_version="$game_type_toc_version"
 			if [[ -z "$toc_version" ]]; then
 				# Check @non-@ blocks
 				case $game_type in
-					classic) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(11[34])/ { print $NF; exit }' ) ;;
-					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(205)/ { print $NF; exit }' ) ;;
-					wrath) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(304)/ { print $NF; exit }' ) ;;
+					classic) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(1[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
+					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(2[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
+					wrath) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(3[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 				esac
 				# This becomes the actual interface version after string replacements
 				root_toc_version="$toc_version"
