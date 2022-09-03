@@ -86,11 +86,11 @@ if [[ ${BASH_VERSINFO[0]} -lt 4 ]] || [[ ${BASH_VERSINFO[0]} -eq 4 && ${BASH_VER
 fi
 
 # Game versions for uploading
-declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" )
+declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" ["wrath"]="wrath" )
 declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
-game_version_order=(classic bcc retail)
+game_version_order=(classic bcc wrath retail)
 # for type in "${game_version_order[@]}"; do
 # reversed - highest to lowest
 # for (( idx=${#game_version_order[@]}-1; idx > 0; idx-- )); do
@@ -113,7 +113,7 @@ escape_substr() {
 filename_filter() {
 	local classic alpha beta invalid
 	[ -n "$skip_invalid" ] && invalid="&" || invalid="_"
-	if [[ "$game_type" != "retail" ]] && [[ "$game_type" != "classic" || "${si_project_version,,}" != *"-classic"* ]] && [[ "$game_type" != "bcc" || "${si_project_version,,}" != *"-bcc"* ]]; then
+	if [[ "$game_type" != "retail" ]] && [[ "$game_type" != "classic" || "${si_project_version,,}" != *"-classic"* ]] && [[ "$game_type" != "bcc" || "${si_project_version,,}" != *"-bcc"* ]] && [[ "$game_type" != "wrath" || "${si_project_version,,}" != *"-wrath"* ]]; then
 		# only append the game type if the tag doesn't include it
 		classic="-$game_type"
 	fi
@@ -211,7 +211,7 @@ while getopts ":celLzusop:dw:a:r:t:g:m:n:" opt; do
 		g) # Set the game type or version
 			OPTARG="${OPTARG,,}"
 			case "$OPTARG" in
-				retail|classic|bcc) game_type="$OPTARG" ;; # game_version from toc
+				retail|classic|bcc|wrath) game_type="$OPTARG" ;; # game_version from toc
 				mainline) game_type="retail" ;;
 				bc)
 					echo "Invalid argument for option \"-g\" ($OPTARG)" >&2
@@ -236,6 +236,8 @@ while getopts ":celLzusop:dw:a:r:t:g:m:n:" opt; do
 							game_type="classic"
 						elif [[ ${BASH_REMATCH[1]} == "2" && ${BASH_REMATCH[2]} == "5" ]]; then
 							game_type="bcc"
+						elif [[ ${BASH_REMATCH[1]} == "3" && ${BASH_REMATCH[2]} == "4" ]]; then
+							game_type="wrath"
 						else
 							game_type="retail"
 						fi
@@ -1006,6 +1008,8 @@ do
 		type="classic"
 	elif [[ ${i%.toc} =~ (.*)[_-](TBC|BCC)$ ]]; then
 		type="bcc"
+	elif [[ ${i%.toc} =~ (.*)[_-](Wrath)$ ]]; then
+		type="wrath"
 	fi
 	
 	tmp_toc_file_data=$(
@@ -1020,6 +1024,7 @@ do
 			case $tmp_interface in
 				1*) type="classic" ;;
 				2*) type="bcc" ;;
+				3*) type="wrath" ;;
 				*) type="retail"
 			esac
 		fi
@@ -1058,7 +1063,7 @@ if [[ -z "$package" ]]; then
 		exit 1
 	fi
 	package=${package%.toc}
-	if [[ $package =~ ^(.*)[_-](Mainline|TBC|BCC|Classic|Vanilla)$ ]]; then
+	if [[ $package =~ ^(.*)[_-](Mainline|Wrath|TBC|BCC|Classic|Vanilla)$ ]]; then
 		package="${BASH_REMATCH[1]}"
 	fi
 fi
@@ -1091,6 +1096,7 @@ if [[ -z "$toc_multi" ]]; then
 		case $toc_version in
 			11[34]*) game_type="classic" ;;
 			205*) game_type="bcc" ;;
+			304*) game_type="wrath" ;;
 			*) game_type="retail"
 		esac
 	else
@@ -1107,6 +1113,7 @@ if [[ -z "$toc_multi" ]]; then
 		if [[ -z "$toc_version" ]] || \
 			 [[ "$game_type" == "classic" && ("$toc_version" != "113"* && "$toc_version" != "114"*) ]] || \
 			 [[ "$game_type" == "bcc" && "$toc_version" != "205"* ]] || \
+			 [[ "$game_type" == "wrath" && "$toc_version" != "304"* ]] || \
 			 [[ "$game_type" == "retail" && ("$toc_version" == "113"* || "$toc_version" == "114"* || "$toc_version" == "205"*) ]]
 		then
 			toc_version="$game_type_toc_version"
@@ -1115,6 +1122,7 @@ if [[ -z "$toc_multi" ]]; then
 				case $game_type in
 					classic) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(11[34])/ { print $NF; exit }' ) ;;
 					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(205)/ { print $NF; exit }' ) ;;
+					wrath) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(304)/ { print $NF; exit }' ) ;;
 				esac
 				# This becomes the actual interface version after string replacements
 				root_toc_version="$toc_version"
@@ -1610,7 +1618,7 @@ copy_directory_tree() {
 							_cdt_filters+="|toc_filter version-retail ${_cdt_classic:+true}"
 							_cdt_filters+="|toc_filter version-classic $([[ -z "$_cdt_classic" || "$_cdt_classic" == "bcc" ]] && echo "true")"
 							_cdt_filters+="|toc_filter version-bcc $([[ -z "$_cdt_classic" || "$_cdt_classic" == "classic" ]] && echo "true")"
-							[[ -z "$_cdt_external" && ! $file =~ -(Mainline|Classic|BCC).toc$ ]] && _cdt_filters+="|toc_interface_filter"
+							[[ -z "$_cdt_external" && ! $file =~ -(Mainline|Classic|BCC|Wrath).toc$ ]] && _cdt_filters+="|toc_interface_filter"
 							[ -n "$_cdt_localization" ] && _cdt_filters+="|localization_filter"
 							;;
 					esac
