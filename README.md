@@ -1,6 +1,6 @@
-## Building for multiple game versions
+## Building for multiple game clients
 
-This fork is designed to handle multiple client specific TOC files.
+This fork is designed to handle multiple and/or client specific TOC files.
 
 - Retail
   - AddOnName_Mainline.toc
@@ -22,9 +22,9 @@ This fork is designed to handle multiple client specific TOC files.
   - AddOnName.toc
 
 
-While you do not require an AddOnName.toc if you have an AddOnName-Mainline.toc
-file, some hosting services (eg CurseForge) cannot handle that situation and you
-may be better off leaving it as the default format.
+While you do not require an AddOnName.toc for the game to work, if you remove that and only have the AddOnName-ClientType.toc
+variants some hosting services cannot handle that situation (eg CurseForge will reject the upload for not having a TOC file) so you
+may be better off leaving it as the default "global" format.
 
 Use of the -g option should not be required, and is untested so i have no idea
 what it will do, so dont use it.
