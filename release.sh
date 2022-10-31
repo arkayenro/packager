@@ -2302,7 +2302,7 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 	if [ -n "$GITHUB_ACTIONS" ]; then
-		echo "::set-output name=archive_path::${archive}"
+		echo "ARCHIVE_PATH=${archive}" >> $GITHUB_OUTPUT
 	fi
 
 	start_group "Creating archive: $archive_name ($archive_label)" "archive"
@@ -2699,7 +2699,7 @@ if [ -z "$skip_zipfile" ]; then
 		
 		echo "Uploading $archive_name ($_site_game_version $file_type) to $_site_name"
 		resultfile="$releasedir/wago_result.json"
-		result=$( echo "$_site_payload" | curl -sS --retry 3 --retry-delay 10 \
+		result=$( echo "$_site_payload" | curl -sS --retry 3 --retry-delay 90 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "authorization: Bearer $wago_token" \
 				-H "accept: application/json" \
