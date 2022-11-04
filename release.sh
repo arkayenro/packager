@@ -2703,6 +2703,7 @@ if [ -z "$skip_zipfile" ]; then
 				-w "%{http_code}" -o "$resultfile" \
 				-H "Authorization: Bearer $wago_token" \
 				-H "Accept: application/json" \
+				-H "Connection: close" \
 				-F "file=@$archive" \
 				-F "metadata=<-" \
 				"https://addons.wago.io/api/projects/$wagoid/version"
