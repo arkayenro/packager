@@ -1003,15 +1003,15 @@ do
 	echo "Processing: [$i]"
 	
 	type=""
-	if [[ ${i%.toc} =~ (.*)[_-](Mainline)$ ]]; then
+	if [[ ${i%.toc} =~ (.*)[_-](mainline)$ ]]; then
 		type="retail"
-	elif [[ ${i%.toc} =~ (.*)[_-](Vanilla|Classic)$ ]]; then
+	elif [[ ${i%.toc} =~ (.*)[_-](vanilla|classic)$ ]]; then
 		type="classic"
-	elif [[ ${i%.toc} =~ (.*)[_-](TBC|BCC)$ ]]; then
+	elif [[ ${i%.toc} =~ (.*)[_-](tbc|bcc)$ ]]; then
 		type="bcc"
-	elif [[ ${i%.toc} =~ (.*)[_-](Wrath)$ ]]; then
+	elif [[ ${i%.toc} =~ (.*)[_-](wrath)$ ]]; then
 		type="wrath"
-	elif [[ ${i%.toc} =~ (.*)[_-](Cata)$ ]]; then
+	elif [[ ${i%.toc} =~ (.*)[_-](cata)$ ]]; then
 		type="cata"
 	fi
 	
