@@ -1116,11 +1116,11 @@ if [[ -z "$toc_multi" ]]; then
 		fi
 		# Check for other interface lines
 		if [[ -z "$toc_version" ]] || \
-			 [[ "$game_type" == "classic" && ("$toc_version" != "1[0-9][0-9][0-9][0-9]") ]] || \
+			 [[ "$game_type" == "classic" && "$toc_version" != "1[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "bcc" && "$toc_version" != "2[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "wrath" && "$toc_version" != "3[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "cata" && "$toc_version" != "4[0-9][0-9][0-9][0-9]" ]] || \
-			 [[ "$game_type" == "retail" && ("$toc_version" == "[1-4][0-9][0-9][0-9][0-9]" ) ]]
+			 [[ "$game_type" == "retail" && "$toc_version" == "[1-4][0-9][0-9][0-9][0-9]" ]]
 		then
 			toc_version="$game_type_toc_version"
 			if [[ -z "$toc_version" ]]; then
