@@ -47,4 +47,3 @@ if [[ -n $GITHUB_ACTIONS ]]; then
 	install_pandoc
 	install_subversion
 fi
-
