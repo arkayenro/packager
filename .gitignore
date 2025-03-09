@@ -1,4 +1,5 @@
+.ssh
+.release
 tests
 *.toc
 .pkgmeta
-.release

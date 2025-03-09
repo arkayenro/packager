@@ -14,10 +14,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - run: $GITHUB_ACTION_PATH/setup-packager.sh
+    - run: $GITHUB_ACTION_PATH/release.sh ${{ inputs.args }}
       env:
         INPUT_PANDOC: ${{ inputs.pandoc }}
-        INPUT_ARGS: ${{ inputs.args }}
-      shell: bash
-    - run: $GITHUB_ACTION_PATH/release.sh ${{ inputs.args }}
       shell: bash
