@@ -138,11 +138,11 @@ fi
 
 
 # Game versions for uploading
-declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" ["wrath"]="wrath" ["cata"]="cata" )
+declare -A game_flavors=( ["retail"]="mainline" ["classic"]="classic" ["bcc"]="bcc" ["wrath"]="wrath" ["cata"]="cata" ["mists"]="mists" )
 declare -A game_versions=()
 declare -A toc_paths=()
 declare -A toc_versions=()
-game_version_order=(classic bcc wrath cata retail)
+game_version_order=(classic bcc wrath cata mists retail)
 # for type in "${game_version_order[@]}"; do
 # reversed - highest to lowest
 # for (( idx=${#game_version_order[@]}-1; idx > 0; idx-- )); do
@@ -165,7 +165,7 @@ escape_substr() {
 filename_filter() {
 	local classic alpha beta invalid
 	[ -n "$skip_invalid" ] && invalid="&" || invalid="_"
-	if [[ "$game_type" != "retail" ]] && [[ "$game_type" != "classic" || "${si_project_version,,}" != *"-classic"* ]] && [[ "$game_type" != "bcc" || "${si_project_version,,}" != *"-bcc"* ]] && [[ "$game_type" != "wrath" || "${si_project_version,,}" != *"-wrath"* ]] && [[ "$game_type" != "cata" || "${si_project_version,,}" != *"-cata"* ]]; then
+	if [[ "$game_type" != "retail" ]] && [[ "$game_type" != "classic" || "${si_project_version,,}" != *"-classic"* ]] && [[ "$game_type" != "bcc" || "${si_project_version,,}" != *"-bcc"* ]] && [[ "$game_type" != "wrath" || "${si_project_version,,}" != *"-wrath"* ]] && [[ "$game_type" != "cata" || "${si_project_version,,}" != *"-cata"* ]] && [[ "$game_type" != "mists" || "${si_project_version,,}" != *"-mists"* ]]; then
 		# only append the game type if the tag doesn't include it
 		classic="-$game_type"
 	fi
@@ -263,7 +263,7 @@ while getopts ":celLzusop:dw:a:r:t:g:m:n:" opt; do
 		g) # Set the game type or version
 			OPTARG="${OPTARG,,}"
 			case "$OPTARG" in
-				retail|classic|bcc|wrath|cata) game_type="$OPTARG" ;; # game_version from toc
+				retail|classic|bcc|wrath|cata|mists) game_type="$OPTARG" ;; # game_version from toc
 				mainline) game_type="retail" ;;
 				bc)
 					echo "Invalid argument for option \"-g\" ($OPTARG)" >&2
@@ -292,6 +292,8 @@ while getopts ":celLzusop:dw:a:r:t:g:m:n:" opt; do
 							game_type="wrath"
 						elif [[ ${BASH_REMATCH[1]} == "4" ]]; then
 							game_type="cata"
+						elif [[ ${BASH_REMATCH[1]} == "5" ]]; then
+							game_type="mists"
 						else
 							game_type="retail"
 						fi
@@ -1065,6 +1067,8 @@ do
 		type="wrath"
 	elif [[ ${i%.toc} =~ (.*)[_-](cata)$ ]]; then
 		type="cata"
+	elif [[ ${i%.toc} =~ (.*)[_-](mists)$ ]]; then
+		type="mists"
 	fi
 	
 	tmp_toc_file_data=$(
@@ -1081,6 +1085,7 @@ do
 				2[0-9][0-9][0-9][0-9]) type="bcc" ;;
 				3[0-9][0-9][0-9][0-9]) type="wrath" ;;
 				4[0-9][0-9][0-9][0-9]) type="cata" ;;
+        5[0-9][0-9][0-9][0-9]) type="mists" ;;
 				*) type="retail"
 			esac
 		fi
@@ -1119,7 +1124,7 @@ if [[ -z "$package" ]]; then
 		exit 1
 	fi
 	package=${package%.toc}
-	if [[ $package =~ ^(.*)[_-](Mainline|Cata|Wrath|TBC|BCC|Classic|Vanilla)$ ]]; then
+	if [[ $package =~ ^(.*)[_-](Mainline|Mists|Cata|Wrath|TBC|BCC|Classic|Vanilla)$ ]]; then
 		package="${BASH_REMATCH[1]}"
 	fi
 fi
@@ -1154,6 +1159,7 @@ if [[ -z "$toc_multi" ]]; then
 			2[0-9][0-9][0-9][0-9]) game_type="bcc" ;;
 			3[0-9][0-9][0-9][0-9]) game_type="wrath" ;;
 			4[0-9][0-9][0-9][0-9]) game_type="cata" ;;
+      5[0-9][0-9][0-9][0-9]) game_type="mists" ;;
 			*) game_type="retail"
 		esac
 	else
@@ -1172,6 +1178,7 @@ if [[ -z "$toc_multi" ]]; then
 			 [[ "$game_type" == "bcc" && "$toc_version" != "2[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "wrath" && "$toc_version" != "3[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "cata" && "$toc_version" != "4[0-9][0-9][0-9][0-9]" ]] || \
+       [[ "$game_type" == "mists" && "$toc_version" != "5[0-9][0-9][0-9][0-9]" ]] || \
 			 [[ "$game_type" == "retail" && "$toc_version" == "[1-4][0-9][0-9][0-9][0-9]" ]]
 		then
 			toc_version="$game_type_toc_version"
@@ -1182,6 +1189,7 @@ if [[ -z "$toc_multi" ]]; then
 					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(2[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 					wrath) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(3[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 					cata) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(4[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
+          mists) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(5[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 				esac
 				# This becomes the actual interface version after string replacements
 				root_toc_version="$toc_version"
@@ -1677,7 +1685,7 @@ copy_directory_tree() {
 							_cdt_filters+="|toc_filter version-retail ${_cdt_classic:+true}"
 							_cdt_filters+="|toc_filter version-classic $([[ -z "$_cdt_classic" || "$_cdt_classic" == "bcc" ]] && echo "true")"
 							_cdt_filters+="|toc_filter version-bcc $([[ -z "$_cdt_classic" || "$_cdt_classic" == "classic" ]] && echo "true")"
-							[[ -z "$_cdt_external" && ! $file =~ -(Mainline|Classic|BCC|Wrath|Cata).toc$ ]] && _cdt_filters+="|toc_interface_filter"
+							[[ -z "$_cdt_external" && ! $file =~ -(Mainline|Classic|BCC|Wrath|Cata|Mists).toc$ ]] && _cdt_filters+="|toc_interface_filter"
 							[ -n "$_cdt_localization" ] && _cdt_filters+="|localization_filter"
 							;;
 					esac
@@ -2709,6 +2717,8 @@ if [ -z "$skip_zipfile" ]; then
 				elif [[ "$type" == "wrath" ]]; then
 					_site_support_property+="\"supported_wotlk_patch\": \"${game_versions[$type]}\", "
 				elif [[ "$type" == "cata" ]]; then
+					_site_support_property+="\"supported_cata_patch\": \"${game_versions[$type]}\", "
+				elif [[ "$type" == "mists" ]]; then
 					_site_support_property+="\"supported_cata_patch\": \"${game_versions[$type]}\", "
 				else
 					_site_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
