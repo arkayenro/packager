@@ -2713,15 +2713,15 @@ if [ -z "$skip_zipfile" ]; then
 				upload_wago="yes"
 				
 				if [[ "$type" == "bcc" ]]; then
-					_site_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
+					_site_support_property+="\"supported_bc_patches\": \"${game_versions[$type]}\", "
 				elif [[ "$type" == "wrath" ]]; then
-					_site_support_property+="\"supported_wotlk_patch\": \"${game_versions[$type]}\", "
+					_site_support_property+="\"supported_wotlk_patches\": \"${game_versions[$type]}\", "
 				elif [[ "$type" == "cata" ]]; then
-					_site_support_property+="\"supported_cata_patch\": \"${game_versions[$type]}\", "
+					_site_support_property+="\"supported_cata_patches\": \"${game_versions[$type]}\", "
 				elif [[ "$type" == "mists" ]]; then
-					_site_support_property+="\"supported_cata_patch\": \"${game_versions[$type]}\", "
+					_site_support_property+="\"supported_mop_patches\": \"${game_versions[$type]}\", "
 				else
-					_site_support_property+="\"supported_${type}_patch\": \"${game_versions[$type]}\", "
+					_site_support_property+="\"supported_${type}_patches\": \"${game_versions[$type]}\", "
 				fi
 				
 			fi
