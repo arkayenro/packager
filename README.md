@@ -7,6 +7,11 @@ This fork is designed to handle multiple and/or client specific TOC files.
   - AddOnName-Mainline.toc
   - AddOnName.toc
 
+- Mists of Pandaria
+  - AddOnName_Mists.toc
+  - AddOnName-Mists.toc
+  - AddOnName.toc
+
 - Cataclysm
   - AddOnName_Cata.toc
   - AddOnName-Cata.toc

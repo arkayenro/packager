@@ -79,6 +79,12 @@ fi
 
 ## END TESTING OPTIONS
 
+COLOR_RED = '\033[0;31m'
+COLOR_YELLOW = '\033[0;33m'
+COLOR_GREEN = '\033[0;32m'
+COLOR_GRAY = '\033[0;37m'
+COLOR_NONE = '\033[0m'
+
 
 if [[ ${BASH_VERSINFO[0]} -lt 4 ]] || [[ ${BASH_VERSINFO[0]} -eq 4 && ${BASH_VERSINFO[1]} -lt 3 ]]; then
 	echo "ERROR! bash version 4.3 or above is required. Your version is ${BASH_VERSION}." >&2
@@ -459,6 +465,7 @@ if [ -f "$topdir/.env" ]; then
 elif [ -f ".env" ]; then
 	. ".env"
 fi
+
 [ -z "$cf_token" ] && cf_token=$CF_API_KEY
 [ -z "$github_token" ] && github_token=$GITHUB_OAUTH
 [ -z "$wowi_token" ] && wowi_token=$WOWI_API_TOKEN
@@ -754,6 +761,7 @@ if [[ -n "$test_local" ]]; then
 	si_project_version="$tag"
 	project_version="$tag"
 fi
+
 tag=$si_tag
 project_version=$si_project_version
 previous_version=$si_previous_tag
@@ -1049,7 +1057,7 @@ fi
 ###
 
 tmp_paths=(
-  "$topdir"/*.toc
+	"$topdir"/*.toc
 )
 
 for i in "${tmp_paths[@]##*/}"
@@ -1085,7 +1093,7 @@ do
 				2[0-9][0-9][0-9][0-9]) type="bcc" ;;
 				3[0-9][0-9][0-9][0-9]) type="wrath" ;;
 				4[0-9][0-9][0-9][0-9]) type="cata" ;;
-        5[0-9][0-9][0-9][0-9]) type="mists" ;;
+				5[0-9][0-9][0-9][0-9]) type="mists" ;;
 				*) type="retail"
 			esac
 		fi
@@ -1096,11 +1104,12 @@ do
 			game_versions[$type]="$((${BASH_REMATCH[1]#0})).$((${BASH_REMATCH[2]#0})).$((${BASH_REMATCH[3]#0}))"
 			echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
 		else
-			echo "Error: duplicate interface version. ${toc_paths[$type]} and $i both cover $type"
+			echo -e "${COLOR_RED}ERROR: duplicate interface version. ${toc_paths[$type]} and $i both cover ${type}${COLOR_NONE}"
 			exit_code=1
 		fi
 	else
-		echo "type [$type], interface version [$tmp_interface] is invalid, ignoring this toc file"
+		echo -e "${COLOR_RED}ERROR: invalid toc file, type [${type}] interface version [${tmp_interface}]${COLOR_NONE}"
+		exit_code=1
 	fi
 	
 done
@@ -1159,7 +1168,7 @@ if [[ -z "$toc_multi" ]]; then
 			2[0-9][0-9][0-9][0-9]) game_type="bcc" ;;
 			3[0-9][0-9][0-9][0-9]) game_type="wrath" ;;
 			4[0-9][0-9][0-9][0-9]) game_type="cata" ;;
-      5[0-9][0-9][0-9][0-9]) game_type="mists" ;;
+			5[0-9][0-9][0-9][0-9]) game_type="mists" ;;
 			*) game_type="retail"
 		esac
 	else
@@ -1174,12 +1183,12 @@ if [[ -z "$toc_multi" ]]; then
 		fi
 		# Check for other interface lines
 		if [[ -z "$toc_version" ]] || \
-			 [[ "$game_type" == "classic" && "$toc_version" != "1[0-9][0-9][0-9][0-9]" ]] || \
-			 [[ "$game_type" == "bcc" && "$toc_version" != "2[0-9][0-9][0-9][0-9]" ]] || \
-			 [[ "$game_type" == "wrath" && "$toc_version" != "3[0-9][0-9][0-9][0-9]" ]] || \
-			 [[ "$game_type" == "cata" && "$toc_version" != "4[0-9][0-9][0-9][0-9]" ]] || \
-       [[ "$game_type" == "mists" && "$toc_version" != "5[0-9][0-9][0-9][0-9]" ]] || \
-			 [[ "$game_type" == "retail" && "$toc_version" == "[1-4][0-9][0-9][0-9][0-9]" ]]
+			[[ "$game_type" == "classic" && "$toc_version" != "1[0-9][0-9][0-9][0-9]" ]] || \
+			[[ "$game_type" == "bcc" && "$toc_version" != "2[0-9][0-9][0-9][0-9]" ]] || \
+			[[ "$game_type" == "wrath" && "$toc_version" != "3[0-9][0-9][0-9][0-9]" ]] || \
+			[[ "$game_type" == "cata" && "$toc_version" != "4[0-9][0-9][0-9][0-9]" ]] || \
+			[[ "$game_type" == "mists" && "$toc_version" != "5[0-9][0-9][0-9][0-9]" ]] || \
+			[[ "$game_type" == "retail" && "$toc_version" == "[1-4][0-9][0-9][0-9][0-9]" ]]
 		then
 			toc_version="$game_type_toc_version"
 			if [[ -z "$toc_version" ]]; then
@@ -1189,7 +1198,7 @@ if [[ -z "$toc_multi" ]]; then
 					bcc) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(2[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 					wrath) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(3[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 					cata) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(4[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
-          mists) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(5[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
+					mists) toc_version=$( sed -n '/@non-[-a-z]*@/,/@end-non-[-a-z]*@/{//b;p}' <<< "$toc_file_data" | awk '/#[[:blank:]]*## Interface:[[:blank:]]*(5[0-9][0-9][0-9][0-9])/ { print $NF; exit }' ) ;;
 				esac
 				# This becomes the actual interface version after string replacements
 				root_toc_version="$toc_version"
@@ -2171,10 +2180,10 @@ else
 		EOF
 		git -C "$topdir" log "$_changelog_range" --pretty=format:"###%B" \
 			| sed -e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/- /g' -e 's/$/  /' \
-			      -e 's/\([a-zA-Z0-9]\)_\([a-zA-Z0-9]\)/\1\\_\2/g' \
-			      -e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
-			      -e '/git-svn-id:/d' -e '/^[[:space:]]*This reverts commit [0-9a-f]\{40\}\.[[:space:]]*$/d' \
-			      -e '/^[[:space:]]*$/d' \
+						-e 's/\([a-zA-Z0-9]\)_\([a-zA-Z0-9]\)/\1\\_\2/g' \
+						-e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
+						-e '/git-svn-id:/d' -e '/^[[:space:]]*This reverts commit [0-9a-f]\{40\}\.[[:space:]]*$/d' \
+						-e '/^[[:space:]]*$/d' \
 			| line_ending_filter >> "$pkgdir/$changelog"
 
 		# WoWI uses BBCode, generate something usable to post to the site
@@ -2189,9 +2198,9 @@ else
 			EOF
 			git -C "$topdir" log "$_changelog_range" --pretty=format:"###%B" \
 				| sed -e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/[*]/g' \
-				      -e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
-				      -e '/git-svn-id:/d' -e '/^[[:space:]]*This reverts commit [0-9a-f]\{40\}\.[[:space:]]*$/d' \
-				      -e '/^[[:space:]]*$/d' \
+							-e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
+							-e '/git-svn-id:/d' -e '/^[[:space:]]*This reverts commit [0-9a-f]\{40\}\.[[:space:]]*$/d' \
+							-e '/^[[:space:]]*$/d' \
 				| line_ending_filter >> "$wowi_changelog"
 			echo "[/list]" | line_ending_filter >> "$wowi_changelog"
 		fi
@@ -2213,10 +2222,10 @@ else
 		svn log "$topdir" "$_changelog_range" --xml \
 			| awk '/<msg>/,/<\/msg>/' \
 			| sed -e 's/<msg>/###/g' -e 's/<\/msg>//g' \
-			      -e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/- /g' -e 's/$/  /' \
-			      -e 's/\([a-zA-Z0-9]\)_\([a-zA-Z0-9]\)/\1\\_\2/g' \
-			      -e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
-			      -e '/^[[:space:]]*$/d' \
+						-e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/- /g' -e 's/$/  /' \
+						-e 's/\([a-zA-Z0-9]\)_\([a-zA-Z0-9]\)/\1\\_\2/g' \
+						-e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
+						-e '/^[[:space:]]*$/d' \
 			| line_ending_filter >> "$pkgdir/$changelog"
 
 		# WoWI uses BBCode, generate something usable to post to the site
@@ -2232,9 +2241,9 @@ else
 			svn log "$topdir" "$_changelog_range" --xml \
 				| awk '/<msg>/,/<\/msg>/' \
 				| sed -e 's/<msg>/###/g' -e 's/<\/msg>//g' \
-				      -e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/[*]/g' \
-				      -e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
-				      -e '/^[[:space:]]*$/d' \
+							-e 's/^/    /g' -e 's/^ *$//g' -e 's/^    ###/[*]/g' \
+							-e 's/\[ci skip\]//g' -e 's/\[skip ci\]//g' \
+							-e '/^[[:space:]]*$/d' \
 				| line_ending_filter >> "$wowi_changelog"
 			echo "[/list]" | line_ending_filter >> "$wowi_changelog"
 		fi
@@ -2407,6 +2416,7 @@ if [ -z "$skip_zipfile" ]; then
 		( set -f; cd "$releasedir" && zip -X -r -q "$nolib_archive" $contents -x $nolib_exclude )
 
 		if [ ! -f "$nolib_archive" ]; then
+			echo -e "${COLOR_RED}nolib_archive not found${COLOR_NONE}"
 			exit_code=1
 		fi
 		end_group "archive.nolib"
@@ -2424,7 +2434,7 @@ if [ -z "$skip_zipfile" ]; then
 	
 	
 	if [[ -n "$upload_curseforge" || -n "$upload_wowinterface" || -n "$upload_github" || -n "$upload_wago" ]] && ! hash jq &>/dev/null; then
-		echo "Skipping upload because \"jq\" was not found."
+		echo -e "${COLOR_RED}Skipping upload because \"jq\" was not found${COLOR_NONE}"
 		echo
 		upload_curseforge=""
 		upload_wowinterface=""
@@ -2432,13 +2442,14 @@ if [ -z "$skip_zipfile" ]; then
 		upload_github=""
 		exit_code=1
 	fi
-
+	
+	
+	# Prepare upload to CurseForge
+	_site_upload=""
+	_site_name="CurseForge"
+	echo "Processing $_site_name"
 	echo "cf = -z [$skip_upload] && -z [$skip_cf_upload] && -n [$slug] && -n [$cf_token] && -n [$project_site]"
 	if [ -n "$upload_curseforge" ]; then
-		upload_curseforge=""
-		_site_name="CurseForge"
-		echo "Processing $_site_name"
-		
 		_site_game_version=""
 		_site_game_version_id=""
 		_site_game_version_ids=()
@@ -2465,16 +2476,17 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
-					exit_code=1
+					echo -e "${COLOR_YELLOW}Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on ${_site_name}${COLOR_NONE}"
 				else
 					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
-					upload_curseforge="yes"
+					_site_upload="yes"
 				fi
+				
 			done
 			
-			if [ -n "$upload_curseforge" ]; then
+			if [ -n "$_site_upload" ]; then
+				
 				for type in "${game_version_order[@]}"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
@@ -2489,24 +2501,21 @@ if [ -z "$skip_zipfile" ]; then
 					done
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
+				
 			else
-				echo "None of your toc versions are supported by $_site_name"
-				echo
-				echo "Skipping upload to $_site_name"
-				echo
-				exit_code=1
+				echo -e "${COLOR_RED}ERROR: None of your toc versions are supported by ${_site_name}${COLOR_NONE}"
+				exit_code=2
 			fi
+			
 		else
-			echo "Error fetching $_site_name game version data from $url"
-			echo
-			echo "Skipping upload to $_site_name"
-			echo
-			exit_code=1
+			echo -e "${COLOR_RED}ERROR: Failed to fetch version data from ${url}${COLOR_NONE}"
+			exit_code=2
 		fi
+		
 	fi
 	
-	# Upload to CurseForge.
-	if [ -n "$upload_curseforge" ]; then
+	# Upload to CurseForge
+	if [ -n "$_site_upload" ]; then
 		_site_payload=$( cat <<-EOF
 		{
 		  "displayName": "$archive_label",
@@ -2540,34 +2549,38 @@ if [ -z "$skip_zipfile" ]; then
 				302)
 					echo "Error! ($result)"
 					# don't need to ouput the redirect page
-					exit_code=1
+					exit_code=3
 					;;
 				404)
 					echo "Error! No project for \"$slug\" found."
-					exit_code=1
+					exit_code=3
 					;;
 				*)
 					echo "Error! ($result)"
 					if [ -s "$resultfile" ]; then
 						echo "$(<"$resultfile")"
 					fi
-					exit_code=1
+					exit_code=3
 					;;
 			esac
 		} || {
-			exit_code=1
+			echo "upload failed"
+			exit_code=3
 		}
 
 		rm -f "$resultfile" 2>/dev/null
 		echo
+	else
+		echo -e "${COLOR_YELLOW}Skipping upload to ${_site_name}${COLOR_NONE}"
 	fi
-
+	
+	
+	# Prepare upload to WoWInterface
+	_site_upload=""
+	_site_name="WowInterface"
+	echo "Processing $_site_name"
 	echo "wowi = -z [$skip_upload] && -n [$tag] && -n [$addonid] && -n [$wowi_token]"
 	if [ -n "$upload_wowinterface" ]; then
-		upload_wowinterface=""
-		_site_name="WowInterface"
-		echo "Processing $_site_name"
-		
 		_site_game_version=""
 		_site_game_version_id=""
 		_site_game_version_ids=()
@@ -2590,16 +2603,16 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 				
 				if [ -z "$tmp_game_version_id" ]; then
-					echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
-					exit_code=1
+					echo -e "${COLOR_YELLOW}Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on ${_site_name}${COLOR_NONE}"
 				else
 					echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 					tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
-					upload_wowinterface="yes"
+					_site_upload="yes"
 				fi
 			done
 			
-			if [ -n "$upload_wowinterface" ]; then
+			if [ -n "$_site_upload" ]; then
+				
 				for type in "${game_version_order[@]}"; do
 					if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 						_site_game_version="${game_versions[$type]}"
@@ -2614,24 +2627,22 @@ if [ -z "$skip_zipfile" ]; then
 					done
 					_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 				fi
+				
 			else
-				echo "None of your toc versions are supported by $_site_name"
-				echo
-				echo "Skipping upload to $_site_name."
-				echo
-				exit_code=1
+				echo -e "${COLOR_RED}ERROR: None of your toc versions are supported by ${_site_name}${COLOR_NONE}"
+				_site_upload=""
+				exit_code=2
 			fi
+			
 		else
-			echo "Error fetching $_site_name game version info from $url"
-			echo
-			echo "Skipping upload to $_site_name"
-			echo
-			exit_code=1
+			echo -e "${COLOR_RED}ERROR: Failed to fetch game version data from ${url}${COLOR_NONE}"
+			exit_code=2
 		fi
+		
 	fi
 	
-	# Upload to WoWInterface.
-	if [ -n "$upload_wowinterface" ]; then
+	# Upload to WoWInterface
+	if [ -n "$_site_upload" ]; then
 		_site_args=()
 		if [ -f "$wowi_changelog" ]; then
 			_site_args+=("-F changelog=<$wowi_changelog")
@@ -2663,34 +2674,38 @@ if [ -z "$skip_zipfile" ]; then
 					;;
 				401)
 					echo "Error! No addon for id \"$addonid\" found or you do not have permission to upload files."
-					exit_code=1
+					exit_code=3
 					;;
 				403)
 					echo "Error! Incorrect api key or you do not have permission to upload files."
-					exit_code=1
+					exit_code=3
 					;;
 				*)
 					echo "Error! ($result)"
 					if [ -s "$resultfile" ]; then
 						echo "$(<"$resultfile")"
 					fi
-					exit_code=1
+					exit_code=3
 					;;
 			esac
 		} || {
-			exit_code=1
+			echo "upload failed"
+			exit_code=3
 		}
 		
 		rm -f "$resultfile" 2>/dev/null
 		echo
+	else
+		echo -e "${COLOR_YELLOW}Skipping upload to ${_site_name}${COLOR_NONE}"
 	fi
 	
+	
+	# Prepare upload to Wago
+	_site_upload=""
+	_site_name="Wago Addons"
+	echo "Processing $_site_name"
 	echo "wago = -z [$skip_upload] && -n [$wagoid] && -n [$wago_token]"
 	if [ -n "$upload_wago" ] ; then
-		upload_wago=""
-		_site_name="Wago Addons"
-		echo "Processing $_site_name"
-		
 		_site_game_version=""
 		_site_game_version_id=""
 		_site_game_version_ids=()
@@ -2705,12 +2720,11 @@ if [ -z "$skip_zipfile" ]; then
 			tmp_game_version_id="${game_versions[$type]}"
 			
 			if [ -z "$tmp_game_version_id" ]; then
-				echo "Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on $_site_name"
-				exit_code=1
+				echo -e "${COLOR_YELLOW}Ignoring ${toc_paths[$type]} as $type version ${game_versions[$type]} is not supported on ${_site_name}${COLOR_NONE}"
 			else
 				echo "${toc_paths[$type]} for $type = ${game_versions[$type]}, version = $tmp_game_version, version id = $tmp_game_version_id"
 				tmp_game_version_ids[$type]=${tmp_game_version_id//[[\]]/} # strip the brackets
-				upload_wago="yes"
+				_site_upload="yes"
 				
 				if [[ "$type" == "bcc" ]]; then
 					_site_support_property+="\"supported_bc_patch\": \"${game_versions[$type]}\", "
@@ -2727,7 +2741,7 @@ if [ -z "$skip_zipfile" ]; then
 			fi
 		done
 		
-		if [ -n "$upload_wago" ]; then
+		if [ -n "$_site_upload" ]; then
 			for type in "${game_version_order[@]}"; do
 				if [[ -n "${tmp_game_version_ids[$type]}" ]]; then
 					_site_game_version="${game_versions[$type]}"
@@ -2743,17 +2757,13 @@ if [ -z "$skip_zipfile" ]; then
 				_site_game_version_id=$(IFS=, ; echo "${_site_game_version_ids[*]}") # join them with a comma
 			fi
 		else
-			echo "None of your toc versions are supported by $_site_name"
-			echo
-			echo "Skipping upload to $_site_name"
-			echo
-			exit_code=1
+			echo -e "${COLOR_RED}ERROR: None of your toc versions are supported by ${_site_name}${COLOR_NONE}"
+			exit_code=2
 		fi
-		
 	fi
 	
 	# Upload to Wago
-	if [ -n "$upload_wago" ] ; then
+	if [ -n "$_site_upload" ] ; then
 		_site_stability="$file_type"
 		if [ "$file_type" = "release" ]; then
 			_site_stability="stable"
@@ -2784,33 +2794,37 @@ if [ -z "$skip_zipfile" ]; then
 				302)
 					echo "Error! ($result)"
 					# don't need to ouput the redirect page
-					exit_code=1
+					exit_code=3
 					;;
 				404)
 					echo "Error! No Wago project for id \"$wagoid\" found."
-					exit_code=1
+					exit_code=3
 					;;
 				*)
 					echo "Error! ($result)"
 					if [ -s "$resultfile" ]; then
 						echo "$(<"$resultfile")"
 					fi
-					exit_code=1
+					exit_code=3
 					;;
 			esac
 		} || {
-			exit_code=1
+			echo "upload failed"
+			exit_code=3
 		}
 		
 		rm -f "$resultfile" 2>/dev/null
 		echo
+	else
+		echo -e "${COLOR_YELLOW}Skipping upload to ${_site_name}${COLOR_NONE}"
 	fi
-
-	echo "gh = -z [$skip_upload] && -n [$tag] && -n [$project_github_slug] && -n [$github_token]"
+	
+	
 	# Create a GitHub Release for tags and upload the zipfile as an asset.
+	_site_name="GitHub"
+	echo "Processing $_site_name"
+	echo "gh = -z [$skip_upload] && -n [$tag] && -n [$project_github_slug] && -n [$github_token]"
 	if [ -n "$upload_github" ]; then
-		_site_name="GitHub"
-		echo "Processing $_site_name"
 		
 		upload_github_asset() {
 			_ghf_release_id=$1
@@ -2850,10 +2864,11 @@ if [ -z "$skip_zipfile" ]; then
 					if [ -s "$_ghf_resultfile" ]; then
 						echo "$(<"$_ghf_resultfile")"
 					fi
-					exit_code=1
+					exit_code=3
 				fi
 			} || {
-				exit_code=1
+				echo "upload failed"
+				exit_code=3
 			}
 
 			rm -f "$_ghf_resultfile" 2>/dev/null
@@ -2952,17 +2967,20 @@ if [ -z "$skip_zipfile" ]; then
 				if [ -s "$resultfile" ]; then
 					echo "$(<"$resultfile")"
 				fi
-				exit_code=1
+				exit_code=3
 			fi
 		} || {
-			exit_code=1
+			echo "upload failed"
+			exit_code=3
 		}
-
+		
 		rm -f "$resultfile" 2>/dev/null
 		if [[ -z "$test_local" ]]; then
 			[ -z "$CI" ] && rm -f "$versionfile" 2>/dev/null
 		fi
 		echo
+	else
+		echo -e "${COLOR_YELLOW}Skipping upload to ${_site_name}${COLOR_NONE}"
 	fi
 	
 fi
@@ -2972,5 +2990,11 @@ fi
 echo
 echo "Packaging complete."
 echo
+echo -e "exit_code is ${exit_code}"
+echo
 
 exit $exit_code
+
+# 1 = general error
+# 2 = site error
+# 3 = upload error
