@@ -79,11 +79,11 @@ fi
 
 ## END TESTING OPTIONS
 
-COLOR_RED = '\033[0;31m'
-COLOR_YELLOW = '\033[0;33m'
-COLOR_GREEN = '\033[0;32m'
-COLOR_GRAY = '\033[0;37m'
-COLOR_NONE = '\033[0m'
+declare COLOR_RED = '\033[0;31m'
+declare COLOR_YELLOW = '\033[0;33m'
+declare COLOR_GREEN = '\033[0;32m'
+declare COLOR_GRAY = '\033[0;37m'
+declare COLOR_NONE = '\033[0m'
 
 
 if [[ ${BASH_VERSINFO[0]} -lt 4 ]] || [[ ${BASH_VERSINFO[0]} -eq 4 && ${BASH_VERSINFO[1]} -lt 3 ]]; then
