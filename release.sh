@@ -1084,34 +1084,67 @@ do
 		[ "$file_type" != "alpha" ] && _tf_alpha="true"
 		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$i" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 	)
-	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
+	#tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
 	
-	if [[ $tmp_interface =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
-		if [[ -z "$type" ]]; then
-			case $tmp_interface in
-				1[0-9][0-9][0-9][0-9]) type="classic" ;;
-				2[0-9][0-9][0-9][0-9]) type="bcc" ;;
-				3[0-9][0-9][0-9][0-9]) type="wrath" ;;
-				4[0-9][0-9][0-9][0-9]) type="cata" ;;
-				5[0-9][0-9][0-9][0-9]) type="mists" ;;
-				*) type="retail"
-			esac
-		fi
-		
-		if [[ -z "${toc_paths[$type]}" ]]; then
-			toc_paths[$type]="$i"
-			toc_versions[$type]="$tmp_interface"
-			game_versions[$type]="$((${BASH_REMATCH[1]#0})).$((${BASH_REMATCH[2]#0})).$((${BASH_REMATCH[3]#0}))"
-			echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
-		else
-			echo -e "${COLOR_RED}ERROR: duplicate interface version. ${toc_paths[$type]} and $i both cover ${type}${COLOR_NONE}"
-			exit_code=1
-		fi
-	else
-		echo -e "${COLOR_RED}ERROR: invalid toc file, type [${type}] interface version [${tmp_interface}]${COLOR_NONE}"
-		exit_code=1
+
+#	if [[ $tmp_interface =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
+#		if [[ -z "$type" ]]; then
+#			case $tmp_interface in
+#				1[0-9][0-9][0-9][0-9]) type="classic" ;;
+#				2[0-9][0-9][0-9][0-9]) type="bcc" ;;
+#				3[0-9][0-9][0-9][0-9]) type="wrath" ;;
+#				4[0-9][0-9][0-9][0-9]) type="cata" ;;
+#				5[0-9][0-9][0-9][0-9]) type="mists" ;;
+#				*) type="retail"
+#			esac
+#		fi
+#		
+#		if [[ -z "${toc_paths[$type]}" ]]; then
+#			toc_paths[$type]="$i"
+#			toc_versions[$type]="$tmp_interface"
+#			game_versions[$type]="$((${BASH_REMATCH[1]#0})).$((${BASH_REMATCH[2]#0})).$((${BASH_REMATCH[3]#0}))"
+#			echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
+#		else
+#			echo -e "${COLOR_RED}ERROR: duplicate interface version. ${toc_paths[$type]} and $i both cover ${type}${COLOR_NONE}"
+#			exit_code=1
+#		fi
+#	else
+#		echo -e "${COLOR_RED}ERROR: invalid toc file, type [${type}] interface version [${tmp_interface}]${COLOR_NONE}"
+#		exit_code=1
+#	fi
+
+	tmp_interface=$( awk '/^## Interface:/ { gsub(/[ \t]/, "", $2); print $2; exit }' <<< "$tmp_toc_file_data" )
+	if [[ -n $tmp_interface ]]; then
+		IFS=',' read -ra V <<< "$tmp_interface"
+		for i in "${V[@]}"; do
+			if [[ $i =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
+				if [[ -z "$type" ]]; then
+					case $i in
+						1[0-9][0-9][0-9][0-9]) type="classic" ;;
+						2[0-9][0-9][0-9][0-9]) type="bcc" ;;
+						3[0-9][0-9][0-9][0-9]) type="wrath" ;;
+						4[0-9][0-9][0-9][0-9]) type="cata" ;;
+						5[0-9][0-9][0-9][0-9]) type="mists" ;;
+						*) type="retail"
+					esac
+				fi
+				
+				if [[ -z "${toc_paths[$type]}" ]]; then
+					toc_paths[$type]="$i"
+					toc_versions[$type]="$i"
+					game_versions[$type]="$((${BASH_REMATCH[1]#0})).$((${BASH_REMATCH[2]#0})).$((${BASH_REMATCH[3]#0}))"
+					echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
+				else
+					echo -e "${COLOR_RED}ERROR: duplicate interface version. ${toc_paths[$type]} and $i both cover ${type}${COLOR_NONE}"
+					exit_code=1
+				fi
+			else
+				echo -e "${COLOR_RED}ERROR: invalid toc file, type [${type}] interface version [${i}]${COLOR_NONE}"
+				exit_code=1
+			fi
+		done
 	fi
-	
+
 done
 
 # find the newest client based data to use as the primary for the rest of the old code
