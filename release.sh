@@ -1154,6 +1154,8 @@ set_info_toc_interface() {
 	local toc_path="$1"
 	local package_name="$2"
 
+	echo "${toc_path}"
+
 	si_game_type_interface=()
 	si_game_type_interface_all=()
 	si_game_root_interface=
@@ -1402,19 +1404,19 @@ for path in "${!toc_root_paths[@]}"; do
 done
 
 # Parse project TOC files
-#for path in "${!toc_root_paths[@]}"; do
-#	for toc_path in "$path/${toc_root_paths[$path]}"{,-Mainline,_Mainline,-Classic,_Classic,-Vanilla,_Vanilla,-BCC,_BCC,-TBC,_TBC,-Wrath,_Wrath,-WOTLKC,_WOTLKC,-Cata,_Cata,-Mists,_Mists}.toc; do
-#		if [[ -f "$toc_path" ]]; then
-#			set_toc_project_info "$toc_path"
-#			set_info_toc_interface "$toc_path" "${toc_root_paths[$path]}"
-#			toc_root_interface[$toc_path]="$si_game_root_interface"
-#			toc_interfaces[$toc_path]=$( IFS=':' ; echo "${si_game_type_interface_all[*]}" )
-#			if [[ " ${toc_paths[*]} " != *" $toc_path "* ]]; then
-#				toc_paths+=("$toc_path")
-#			fi
-#		fi
-#	done
-#done
+for path in "${!toc_root_paths[@]}"; do
+	for toc_path in "$path/${toc_root_paths[$path]}"{,-Mainline,_Mainline,-Classic,_Classic,-Vanilla,_Vanilla,-BCC,_BCC,-TBC,_TBC,-Wrath,_Wrath,-WOTLKC,_WOTLKC,-Cata,_Cata,-Mists,_Mists}.toc; do
+		if [[ -f "$toc_path" ]]; then
+			set_toc_project_info "$toc_path"
+			set_info_toc_interface "$toc_path" "${toc_root_paths[$path]}"
+			toc_root_interface[$toc_path]="$si_game_root_interface"
+			toc_interfaces[$toc_path]=$( IFS=':' ; echo "${si_game_type_interface_all[*]}" )
+			if [[ " ${toc_paths[*]} " != *" $toc_path "* ]]; then
+				toc_paths+=("$toc_path")
+			fi
+		fi
+	done
+done
 
 if [[ ${#toc_interfaces[@]} -eq 0 ]]; then
 	echo "Could not find an addon TOC file. In another directory? Make sure it matches the 'package-as' in .pkgmeta" >&2
