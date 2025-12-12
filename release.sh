@@ -1084,9 +1084,8 @@ do
 		[ "$file_type" != "alpha" ] && _tf_alpha="true"
 		sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$i" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 	)
-	#tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
-	
 
+#	tmp_interface=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$tmp_toc_file_data" )
 #	if [[ $tmp_interface =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
 #		if [[ -z "$type" ]]; then
 #			case $tmp_interface in
@@ -1117,6 +1116,7 @@ do
 	if [[ -n $tmp_interface ]]; then
 		IFS=',' read -ra V <<< "$tmp_interface"
 		for i in "${V[@]}"; do
+			echo "--> [${i}]"
 			if [[ $i =~ ^([0-9]+)([0-9][0-9])([0-9][0-9])$ ]]; then
 				if [[ -z "$type" ]]; then
 					case $i in
@@ -1136,16 +1136,17 @@ do
 					echo "type [$type], interface version [${toc_versions[$type]}], game version [${game_versions[$type]}]"
 				else
 					echo -e "${COLOR_RED}ERROR: duplicate interface version. ${toc_paths[$type]} and $i both cover ${type}${COLOR_NONE}"
-					exit_code=1
+					#exit_code=1
 				fi
 			else
 				echo -e "${COLOR_RED}ERROR: invalid toc file, type [${type}] interface version [${i}]${COLOR_NONE}"
-				exit_code=1
+				#exit_code=1
 			fi
 		done
 	fi
 
 done
+exit_code=1
 
 # find the newest client based data to use as the primary for the rest of the old code
 toc_multi=""
